@@ -1,17 +1,24 @@
 {
   "name": "job-aggregator",
-  "description": "",
+  "description": "Real-time job aggregation platform - Backend Reloaded Hackathon",
   "type": "module",
   "scripts": {
     "postinstall": "motia install",
     "dev": "motia dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "dev:all": "concurrently \"npm run dev\" \"npm run dev:frontend\"",
     "start": "motia start",
+    "start:frontend": "cd frontend && npm run start",
     "generate-types": "motia generate-types",
     "build": "motia build",
+    "build:frontend": "cd frontend && npm run build",
+    "build:all": "npm run build && npm run build:frontend",
     "clean": "rm -rf dist node_modules python_modules .motia .mermaid"
   },
   "keywords": [
-    "motia"
+    "motia",
+    "job-aggregator",
+    "hackathon"
   ],
   "dependencies": {
     "@motiadev/adapter-bullmq-events": "^0.17.9-beta.191",
@@ -27,6 +34,7 @@
   "devDependencies": {
     "@motiadev/workbench": "^0.17.9-beta.191",
     "@types/react": "^19.1.1",
+    "concurrently": "^8.2.2",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3"
   }
