@@ -7,4 +7,19 @@ import bullmqPlugin from '@motiadev/plugin-bullmq/plugin'
 
 export default defineConfig({
   plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin, bullmqPlugin],
+  app: (app) => {
+    // Enable CORS for all routes - handles preflight OPTIONS requests automatically
+    app.use((_req, res, next) => {
+      res.header('Access-Control-Allow-Origin', '*')
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+      res.header('Access-Control-Max-Age', '86400')
+      next()
+    })
+
+    // Handle preflight OPTIONS requests
+    app.options('*', (_req, res) => {
+      res.status(204).send('')
+    })
+  },
 })

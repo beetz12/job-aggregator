@@ -4,16 +4,17 @@
   "type": "module",
   "scripts": {
     "postinstall": "motia install",
-    "dev": "motia dev",
+    "dev": "motia dev -p 8000",
     "dev:frontend": "cd frontend && npm run dev",
     "dev:all": "concurrently \"npm run dev\" \"npm run dev:frontend\"",
-    "start": "motia start",
+    "start": "motia start -p 8000",
     "start:frontend": "cd frontend && npm run start",
     "generate-types": "motia generate-types",
     "build": "motia build",
     "build:frontend": "cd frontend && npm run build",
     "build:all": "npm run build && npm run build:frontend",
-    "clean": "rm -rf dist node_modules python_modules .motia .mermaid"
+    "clean": "rm -rf dist node_modules python_modules .motia .mermaid",
+    "seed": "npx ts-node scripts/seed-demo-data.ts"
   },
   "keywords": [
     "motia",

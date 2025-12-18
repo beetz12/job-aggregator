@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getJobs, getSources, refreshSource } from '@/lib/api'
+import { getJobs, getJob, getSources, refreshSource } from '@/lib/api'
 import { JobFilters } from '@/lib/types'
 
 export function useJobs(filters?: JobFilters) {
@@ -10,6 +10,15 @@ export function useJobs(filters?: JobFilters) {
     queryFn: () => getJobs(filters),
     refetchInterval: 30000, // Refresh every 30 seconds
     staleTime: 10000, // Consider data stale after 10 seconds
+  })
+}
+
+export function useJob(id: string) {
+  return useQuery({
+    queryKey: ['job', id],
+    queryFn: () => getJob(id),
+    staleTime: 60000, // Consider data stale after 60 seconds
+    retry: 1, // Only retry once for individual job fetches
   })
 }
 

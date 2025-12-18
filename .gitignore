@@ -1,8 +1,35 @@
+# Dependencies
 node_modules
 python_modules
 .venv
 venv
+
+# Motia
 .motia
 .mermaid
+
+# Build
 dist
+
+# Python
 *.pyc
+__pycache__
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Next.js (frontend)
+frontend/.next/
+frontend/out/

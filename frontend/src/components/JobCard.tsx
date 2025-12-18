@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Job } from '@/lib/types'
 
 interface JobCardProps {
@@ -14,18 +15,19 @@ export default function JobCard({ job }: JobCardProps) {
   const timeAgo = getTimeAgo(job.postedAt)
 
   return (
-    <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors">
-      <div className="flex justify-between items-start mb-2">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-white truncate">
-            {job.title}
-          </h3>
-          <p className="text-gray-400">{job.company}</p>
+    <Link href={`/jobs/${job.id}`}>
+      <div className="bg-gray-800 rounded-lg p-4 border border-gray-700 hover:border-gray-600 transition-colors cursor-pointer">
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-white truncate">
+              {job.title}
+            </h3>
+            <p className="text-gray-400">{job.company}</p>
+          </div>
+          <span className={`${sourceColors[job.source] || 'bg-gray-600'} text-xs text-white px-2 py-1 rounded ml-2 flex-shrink-0`}>
+            {job.source}
+          </span>
         </div>
-        <span className={`${sourceColors[job.source] || 'bg-gray-600'} text-xs text-white px-2 py-1 rounded ml-2 flex-shrink-0`}>
-          {job.source}
-        </span>
-      </div>
 
       <div className="flex flex-wrap items-center gap-2 text-sm text-gray-400 mb-3">
         {job.location && (
@@ -61,30 +63,26 @@ export default function JobCard({ job }: JobCardProps) {
         </div>
       )}
 
-      <div className="flex justify-between items-center pt-2 border-t border-gray-700">
-        <div className="flex items-center">
-          <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full ${
-                job.healthScore >= 75 ? 'bg-green-500' :
-                job.healthScore >= 50 ? 'bg-yellow-500' :
-                job.healthScore >= 25 ? 'bg-orange-500' : 'bg-red-500'
-              }`}
-              style={{ width: `${job.healthScore}%` }}
-            />
+        <div className="flex justify-between items-center pt-2 border-t border-gray-700">
+          <div className="flex items-center">
+            <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className={`h-full rounded-full ${
+                  job.healthScore >= 75 ? 'bg-green-500' :
+                  job.healthScore >= 50 ? 'bg-yellow-500' :
+                  job.healthScore >= 25 ? 'bg-orange-500' : 'bg-red-500'
+                }`}
+                style={{ width: `${job.healthScore}%` }}
+              />
+            </div>
+            <span className="text-xs text-gray-500 ml-2">{job.healthScore}%</span>
           </div>
-          <span className="text-xs text-gray-500 ml-2">{job.healthScore}%</span>
+          <span className="text-blue-400 hover:text-blue-300 text-sm font-medium">
+            View Details →
+          </span>
         </div>
-        <a
-          href={job.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-400 hover:text-blue-300 text-sm font-medium"
-        >
-          Apply ->
-        </a>
       </div>
-    </div>
+    </Link>
   )
 }
 

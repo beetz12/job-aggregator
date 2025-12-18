@@ -28,7 +28,6 @@ export const handler: Handlers['RefreshSource'] = async (req, { emit, logger }) 
   if (!VALID_SOURCES.includes(name)) {
     return {
       status: 400,
-      headers: { 'Access-Control-Allow-Origin': '*' },
       body: { error: `Invalid source: ${name}. Valid sources: ${VALID_SOURCES.join(', ')}` }
     }
   }
@@ -42,7 +41,6 @@ export const handler: Handlers['RefreshSource'] = async (req, { emit, logger }) 
 
   return {
     status: 202,
-    headers: { 'Access-Control-Allow-Origin': '*' },
     body: { message: 'Refresh initiated', source: name }
   }
 }

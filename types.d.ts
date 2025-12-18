@@ -8,7 +8,7 @@ import { EventHandler, ApiRouteHandler, ApiResponse, MotiaStream, CronHandler } 
 
 declare module 'motia' {
   interface FlowContextStateStreams {
-    
+    'jobs': MotiaStream<{ id: string; title: string; company: string; location?: string; remote: boolean; url: string; description: string; source: 'arbeitnow' | 'hackernews' | 'reddit'; postedAt: string; fetchedAt: string; tags: Array<string>; healthScore: number }>
   }
 
   interface Handlers {
@@ -16,12 +16,14 @@ declare module 'motia' {
     'HelloAPI': ApiRouteHandler<Record<string, unknown>, ApiResponse<200, { message: string; status: string; appName: string }>, { topic: 'process-greeting'; data: { timestamp: string; appName: string; greetingPrefix: string; requestId: string } }>
     'NormalizeJob': EventHandler<{ source: 'arbeitnow' | 'hackernews' | 'reddit'; rawJob: Record<string, unknown> }, { topic: 'index-job'; data: { job: { id: string; title: string; company: string; location?: string; remote: boolean; url: string; description: string; source: 'arbeitnow' | 'hackernews' | 'reddit'; postedAt: string; fetchedAt: string; tags: Array<string>; healthScore: number } } }>
     'IndexJob': EventHandler<{ job: { id: string; title: string; company: string; location?: string; remote: boolean; url: string; description: string; source: 'arbeitnow' | 'hackernews' | 'reddit'; postedAt: string; fetchedAt: string; tags: Array<string>; healthScore: number } }, never>
+    'FetchReddit': EventHandler<{ source: string; manual?: boolean }, { topic: 'normalize-job'; data: { source: 'arbeitnow' | 'hackernews' | 'reddit'; rawJob: Record<string, unknown> } }>
     'FetchArbeitnow': EventHandler<{ source: string; manual?: boolean }, { topic: 'normalize-job'; data: { source: 'arbeitnow' | 'hackernews' | 'reddit'; rawJob: Record<string, unknown> } }>
     'RefreshAllSources': CronHandler<{ topic: 'fetch-jobs-trigger'; data: { source: string; manual?: boolean } }>
     'RefreshSource': ApiRouteHandler<Record<string, unknown>, ApiResponse<202, { message: string; source: string }> | ApiResponse<400, { error: string }>, { topic: 'fetch-jobs-trigger'; data: { source: string; manual?: boolean } }>
     'HealthCheck': ApiRouteHandler<Record<string, unknown>, ApiResponse<200, { status: string; timestamp: string; version: string }>, never>
     'GetSources': ApiRouteHandler<Record<string, unknown>, ApiResponse<200, { sources: Array<{ name: string; lastFetch: string | unknown; jobCount: number; status: 'success' | 'error' | 'pending' | 'unknown'; error?: string }> }>, never>
     'GetJobs': ApiRouteHandler<Record<string, unknown>, ApiResponse<200, { jobs: Array<{ id: string; title: string; company: string; location?: string; remote: boolean; url: string; description: string; source: 'arbeitnow' | 'hackernews' | 'reddit'; postedAt: string; fetchedAt: string; tags: Array<string>; healthScore: number }>; total: number; sources: Array<string>; lastUpdated: string }>, never>
+    'GetJobById': ApiRouteHandler<Record<string, unknown>, ApiResponse<200, { id: string; title: string; company: string; location?: string; remote: boolean; url: string; description: string; source: 'arbeitnow' | 'hackernews' | 'reddit'; postedAt: string; fetchedAt: string; tags: Array<string>; healthScore: number }> | ApiResponse<404, { error: string }>, never>
     'ProcessGreeting': EventHandler<{ timestamp: string; appName: string; greetingPrefix: string; requestId: string }, { topic: 'greeting-processed'; data: { requestId: string; greeting: string; processedBy: string } }>
     'FetchHackerNews': EventHandler<{ source: string; manual?: boolean }, { topic: 'normalize-job'; data: { source: 'arbeitnow' | 'hackernews' | 'reddit'; rawJob: Record<string, unknown> } }>
   }

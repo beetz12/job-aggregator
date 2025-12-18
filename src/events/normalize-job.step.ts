@@ -1,5 +1,7 @@
 import type { EventConfig, Handlers } from 'motia'
 import { z } from 'zod'
+import { calculateHealthScore } from '../services/health-scorer'
+import type { Job } from '../types/job'
 
 const inputSchema = z.object({
   source: z.enum(['arbeitnow', 'hackernews', 'reddit']),
@@ -16,38 +18,10 @@ export const config: EventConfig = {
   flows: ['job-aggregation']
 }
 
-function calculateHealthScore(postedAt: string): number {
-  const posted = new Date(postedAt)
-  const now = new Date()
-  const diffMs = now.getTime() - posted.getTime()
-  const diffDays = diffMs / (1000 * 60 * 60 * 24)
-
-  if (diffDays <= 1) return 100
-  if (diffDays <= 7) return Math.round(100 - (diffDays * 3.5))
-  if (diffDays <= 30) return Math.round(75 - ((diffDays - 7) * 1.1))
-  if (diffDays <= 90) return Math.round(50 - ((diffDays - 30) * 0.4))
-  return Math.max(0, Math.round(25 - ((diffDays - 90) * 0.1)))
-}
-
-interface NormalizedJob {
-  id: string
-  title: string
-  company: string
-  location?: string
-  remote: boolean
-  url: string
-  description: string
-  source: 'arbeitnow' | 'hackernews' | 'reddit'
-  postedAt: string
-  fetchedAt: string
-  tags: string[]
-  healthScore: number
-}
-
 export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger }) => {
   const { source } = input
   const rawJob = input.rawJob as Record<string, unknown>
-  let normalizedJob: NormalizedJob
+  let normalizedJob: Job
 
   logger.info('Normalizing job', { source, jobId: (rawJob.slug || rawJob.id) as string })
 
@@ -91,6 +65,30 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags: [],
+        healthScore: calculateHealthScore(postedAt)
+      }
+    } else if (source === 'reddit') {
+      const postedAtRaw = rawJob.posted_at as number | undefined
+      const postedAt = postedAtRaw
+        ? new Date(postedAtRaw * 1000).toISOString()
+        : new Date().toISOString()
+      const titleStr = (rawJob.title as string) || ''
+      const descriptionStr = (rawJob.description as string) || ''
+      const isRemote =
+        titleStr.toLowerCase().includes('remote') ||
+        descriptionStr.toLowerCase().includes('remote')
+      normalizedJob = {
+        id: `reddit_${rawJob.id as string}`,
+        title: titleStr || 'Job Posting',
+        company: (rawJob.company as string) || 'Unknown Company',
+        location: (rawJob.location as string) || undefined,
+        remote: isRemote,
+        url: (rawJob.url as string) || '',
+        description: descriptionStr.substring(0, 500),
+        source: 'reddit',
+        postedAt,
+        fetchedAt: new Date().toISOString(),
+        tags: (rawJob.tags as string[]) || [],
         healthScore: calculateHealthScore(postedAt)
       }
     } else {

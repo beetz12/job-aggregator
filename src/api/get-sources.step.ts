@@ -1,5 +1,6 @@
 import type { ApiRouteConfig, Handlers } from 'motia'
 import { z } from 'zod'
+import type { SourceMetadata } from '../types/job'
 
 const sourceSchema = z.object({
   name: z.string(),
@@ -26,13 +27,6 @@ export const config: ApiRouteConfig = {
   }
 }
 
-interface SourceMetadata {
-  lastFetch: string
-  jobCount: number
-  status: 'success' | 'error' | 'pending'
-  error?: string
-}
-
 const AVAILABLE_SOURCES = ['arbeitnow', 'hackernews', 'reddit']
 
 export const handler: Handlers['GetSources'] = async (_, { state, logger }) => {
@@ -53,9 +47,6 @@ export const handler: Handlers['GetSources'] = async (_, { state, logger }) => {
 
   return {
     status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*'
-    },
     body: { sources }
   }
 }

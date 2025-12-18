@@ -25,9 +25,6 @@ export const handler: Handlers['HealthCheck'] = async (_, { logger }) => {
 
   return {
     status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*'
-    },
     body: {
       status: 'healthy',
       timestamp: new Date().toISOString(),
