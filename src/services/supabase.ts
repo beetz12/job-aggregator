@@ -1,4 +1,8 @@
 import { Pool, PoolClient } from 'pg'
+import dns from 'dns'
+
+// Force IPv4 for all DNS lookups (Railway doesn't support IPv6)
+dns.setDefaultResultOrder('ipv4first')
 
 const databaseUrl = process.env.DATABASE_URL
 
@@ -19,9 +23,9 @@ export function getPool(): Pool | null {
       ssl: {
         rejectUnauthorized: false // Required for Supabase
       },
-      max: 10, // Maximum connections in pool
+      max: 5, // Reduced for Railway
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000,
+      connectionTimeoutMillis: 15000, // Increased timeout
     })
 
     // Handle pool errors
