@@ -3,7 +3,7 @@
 FROM motiadev/motia:latest
 
 # Cache buster - change this value to force Railway to rebuild
-ARG CACHEBUST=20251221-v6
+ARG CACHEBUST=20251221-v7
 RUN echo "Cache bust: $CACHEBUST"
 
 WORKDIR /app
@@ -32,10 +32,9 @@ RUN npx motia build
 ENV PORT=4000
 EXPOSE 4000
 
-# Health check for Railway (railway.json is IGNORED with Dockerfile builder!)
-# This is the ONLY way to configure health checks when using Dockerfile
+# Health check for Railway - uses native Express endpoint (bypasses Motia framework)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-  CMD curl -f http://localhost:${PORT:-4000}/health || exit 1
+  CMD curl -f http://localhost:${PORT:-4000}/healthz || exit 1
 
 # Run Motia in production mode
 CMD ["sh", "-c", "npx motia start -p ${PORT:-4000}"]

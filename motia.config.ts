@@ -9,6 +9,19 @@ export default defineConfig({
   // BullMQ disabled until Redis is confirmed working
   plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin],
   app: (app) => {
+    // ==========================================================================
+    // NATIVE HEALTH CHECK - Bypasses Motia step processing for Railway
+    // This responds immediately without framework overhead
+    // ==========================================================================
+    app.get('/healthz', (_req, res) => {
+      res.status(200).json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        version: '1.0.0',
+        service: 'job-aggregator'
+      })
+    })
+
     // Enable CORS for all routes - handles preflight OPTIONS requests automatically
     app.use((_req, res, next) => {
       res.header('Access-Control-Allow-Origin', '*')
