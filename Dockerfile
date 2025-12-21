@@ -3,7 +3,7 @@
 FROM motiadev/motia:latest
 
 # Cache buster - change this value to force Railway to rebuild
-ARG CACHEBUST=20251221-v11
+ARG CACHEBUST=20251221-v12
 RUN echo "Cache bust: $CACHEBUST"
 
 WORKDIR /app

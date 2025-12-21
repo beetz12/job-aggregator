@@ -16,10 +16,8 @@ console.log(`[Startup] DATABASE_URL configured: ${!!process.env.DATABASE_URL}`)
 const startupTime = new Date().toISOString()
 
 export default defineConfig({
-  // TEMPORARILY DISABLED ALL PLUGINS FOR DEBUGGING
-  // If this works, we know a plugin is causing the crash
-  plugins: [],
-  // plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin],
+  // Re-enabled plugins - disabling them didn't fix the issue
+  plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin],
   app: (app) => {
     console.log('[Startup] Registering Express middleware and routes...')
 
