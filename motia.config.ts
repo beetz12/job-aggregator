@@ -5,12 +5,15 @@ import observabilityPlugin from '@motiadev/plugin-observability/plugin'
 import statesPlugin from '@motiadev/plugin-states/plugin'
 // import bullmqPlugin from '@motiadev/plugin-bullmq/plugin'  // Temporarily disabled - requires Redis
 
-// Log startup information
+// Log startup information immediately
 const PORT = process.env.PORT || '4000'
 console.log('[Startup] Job Aggregator initializing...')
 console.log(`[Startup] PORT environment variable: ${PORT}`)
 console.log(`[Startup] NODE_ENV: ${process.env.NODE_ENV || 'development'}`)
 console.log(`[Startup] DATABASE_URL configured: ${!!process.env.DATABASE_URL}`)
+
+// Track startup time for diagnostics
+const startupTime = new Date().toISOString()
 
 export default defineConfig({
   // BullMQ disabled until Redis is confirmed working
@@ -19,18 +22,31 @@ export default defineConfig({
     console.log('[Startup] Registering Express middleware and routes...')
 
     // ==========================================================================
-    // NATIVE HEALTH CHECK - Bypasses Motia step processing for Railway
-    // This responds immediately without framework overhead
+    // FAILSAFE HEALTH CHECK - Must respond even if other parts of the app fail
+    // This is the FIRST route registered to ensure it always works
     // ==========================================================================
     app.get('/healthz', (_req, res) => {
-      console.log('[Health] /healthz endpoint hit')
-      res.status(200).json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        version: '1.0.0',
-        service: 'job-aggregator',
-        port: PORT
-      })
+      try {
+        console.log('[Health] /healthz endpoint hit')
+        res.status(200).json({
+          status: 'healthy',
+          timestamp: new Date().toISOString(),
+          startupTime,
+          version: '1.0.0',
+          service: 'job-aggregator',
+          port: PORT,
+          uptime: process.uptime()
+        })
+      } catch (error) {
+        console.error('[Health] Error in health check:', error)
+        res.status(200).send('OK') // Still return 200 for Railway
+      }
+    })
+
+    // Global error handler to catch any unhandled errors
+    app.use((err: Error, _req: unknown, res: { status: (code: number) => { json: (body: unknown) => void } }, _next: unknown) => {
+      console.error('[Express] Unhandled error:', err)
+      res.status(500).json({ error: 'Internal server error' })
     })
 
     // Enable CORS for all routes - handles preflight OPTIONS requests automatically
