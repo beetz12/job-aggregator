@@ -3,7 +3,7 @@
 FROM motiadev/motia:latest
 
 # Cache buster - change this value to force Railway to rebuild
-ARG CACHEBUST=20251221-v7
+ARG CACHEBUST=20251221-v8
 RUN echo "Cache bust: $CACHEBUST"
 
 WORKDIR /app
@@ -28,13 +28,13 @@ RUN npx motia@latest install
 # Build for production (CRITICAL - was missing!)
 RUN npx motia build
 
-# Railway uses PORT environment variable
+# Railway injects PORT environment variable, default to 4000 for local testing
 ENV PORT=4000
 EXPOSE 4000
 
-# Health check for Railway - uses native Express endpoint (bypasses Motia framework)
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=5 \
-  CMD curl -f http://localhost:${PORT:-4000}/healthz || exit 1
+# NOTE: Removed Dockerfile HEALTHCHECK - Railway handles health checks via railway.json
+# This avoids potential PORT mismatch issues during container startup
 
-# Run Motia in production mode
-CMD ["sh", "-c", "npx motia start -p ${PORT:-4000}"]
+# Run Motia in production mode with explicit PORT binding
+# The 'sh -c' wrapper ensures proper shell variable expansion
+CMD ["sh", "-c", "echo \"Starting Motia on port $PORT\" && exec npx motia start -p $PORT"]
