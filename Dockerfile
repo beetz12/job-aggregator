@@ -4,9 +4,9 @@ FROM motiadev/motia:latest
 
 WORKDIR /app
 
-# Install Node.js Dependencies
+# Install ALL Node.js Dependencies (including dev for build)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy Python requirements and install
 COPY requirements.txt ./
@@ -18,10 +18,12 @@ COPY . .
 # Install Motia Python dependencies
 RUN npx motia@latest install
 
+# Build for production (CRITICAL - was missing!)
+RUN npx motia build
+
 # Railway uses PORT environment variable
 ENV PORT=4000
 EXPOSE 4000
 
 # Run Motia in production mode
-# Railway will inject PORT, we use it directly
 CMD ["sh", "-c", "npx motia start -p ${PORT:-4000}"]
