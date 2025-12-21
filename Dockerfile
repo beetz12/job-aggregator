@@ -26,6 +26,5 @@ ENV PORT=3000
 ENV NODE_ENV=production
 EXPOSE 3000
 
-# DIAGNOSTIC: Testing minimal HTTP server to isolate Railway routing issue
-# If this works, the issue is Motia-specific. If not, it's Railway routing.
-CMD ["node", "server-test.js"]
+# Run Motia server - Railway injects PORT automatically
+CMD ["sh", "-c", "npx motia start -p $PORT -H 0.0.0.0"]
