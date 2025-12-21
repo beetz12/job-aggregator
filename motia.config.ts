@@ -22,6 +22,15 @@ export default defineConfig({
     console.log('[Startup] Registering Express middleware and routes...')
 
     // ==========================================================================
+    // ULTRA-SIMPLE PING ENDPOINT - Returns plain text, no JSON parsing
+    // ==========================================================================
+    app.get('/ping', (_req, res) => {
+      console.log('[Ping] /ping endpoint hit')
+      res.setHeader('Content-Type', 'text/plain')
+      res.status(200).send('pong')
+    })
+
+    // ==========================================================================
     // FAILSAFE HEALTH CHECK - Must respond even if other parts of the app fail
     // This is the FIRST route registered to ensure it always works
     // ==========================================================================
