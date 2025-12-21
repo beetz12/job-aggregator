@@ -1,6 +1,7 @@
 'use client'
 
 import { useSources, useRefreshSource } from '@/hooks/useJobs'
+import ApiErrorAlert from '@/components/ApiErrorAlert'
 
 const statusColors: Record<string, string> = {
   success: 'text-green-400 bg-green-400/10',
@@ -17,7 +18,7 @@ const statusLabels: Record<string, string> = {
 }
 
 export default function SourcesPage() {
-  const { data, isLoading } = useSources()
+  const { data, isLoading, error, refetch } = useSources()
   const refreshMutation = useRefreshSource()
 
   if (isLoading) {
@@ -31,6 +32,20 @@ export default function SourcesPage() {
             ))}
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold mb-2">Data Sources</h1>
+          <p className="text-gray-400">
+            Manage and monitor job data sources
+          </p>
+        </div>
+        <ApiErrorAlert error={error} onRetry={() => refetch()} />
       </div>
     )
   }

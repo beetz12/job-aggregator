@@ -4,7 +4,7 @@ import { calculateHealthScore } from '../services/health-scorer'
 import type { Job } from '../types/job'
 
 const inputSchema = z.object({
-  source: z.enum(['arbeitnow', 'hackernews', 'reddit']),
+  source: z.enum(['arbeitnow', 'hackernews', 'reddit', 'remotive']),
   rawJob: z.record(z.string(), z.unknown())
 })
 
@@ -86,6 +86,25 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: (rawJob.url as string) || '',
         description: descriptionStr.substring(0, 500),
         source: 'reddit',
+        postedAt,
+        fetchedAt: new Date().toISOString(),
+        tags: (rawJob.tags as string[]) || [],
+        healthScore: calculateHealthScore(postedAt)
+      }
+    } else if (source === 'remotive') {
+      const postedAtRaw = rawJob.posted_at as number | undefined
+      const postedAt = postedAtRaw
+        ? new Date(postedAtRaw * 1000).toISOString()
+        : new Date().toISOString()
+      normalizedJob = {
+        id: `remotive_${rawJob.id as string}`,
+        title: (rawJob.title as string) || 'Remote Job',
+        company: (rawJob.company as string) || 'Unknown Company',
+        location: (rawJob.location as string) || 'Remote',
+        remote: true, // Remotive is always remote
+        url: (rawJob.url as string) || '',
+        description: ((rawJob.description as string) || '').substring(0, 500),
+        source: 'remotive',
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags: (rawJob.tags as string[]) || [],

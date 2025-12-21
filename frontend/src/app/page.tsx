@@ -4,10 +4,19 @@ import { useJobs, useSources } from '@/hooks/useJobs'
 import StatsCards from '@/components/StatsCards'
 import JobList from '@/components/JobList'
 import SourceStatus from '@/components/SourceStatus'
+import ApiErrorAlert from '@/components/ApiErrorAlert'
 
 export default function Dashboard() {
-  const { data: jobsData, isLoading: jobsLoading } = useJobs({ limit: 12 })
-  const { data: sourcesData, isLoading: sourcesLoading } = useSources()
+  const { data: jobsData, isLoading: jobsLoading, error: jobsError, refetch: refetchJobs } = useJobs({ limit: 12 })
+  const { data: sourcesData, isLoading: sourcesLoading, error: sourcesError, refetch: refetchSources } = useSources()
+
+  const hasError = jobsError || sourcesError
+  const primaryError = jobsError || sourcesError
+
+  const handleRetry = () => {
+    refetchJobs()
+    refetchSources()
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -17,6 +26,14 @@ export default function Dashboard() {
           Real-time job aggregation powered by Motia
         </p>
       </div>
+
+      {hasError && (
+        <ApiErrorAlert
+          error={primaryError}
+          onRetry={handleRetry}
+          className="mb-6"
+        />
+      )}
 
       <StatsCards
         totalJobs={jobsData?.total || 0}

@@ -126,8 +126,8 @@ export function useJobStream(options: UseJobStreamOptions = {}): UseJobStreamRes
       })
 
       // Listen for new job events (ephemeral notifications)
-      subscription.onEvent('new-job', (event) => {
-        console.log('[JobStream] New job event:', event)
+      subscription.onEvent('new-job', () => {
+        // Event received - UI updates handled via change listener
       })
 
       setIsConnected(true)
@@ -141,7 +141,6 @@ export function useJobStream(options: UseJobStreamOptions = {}): UseJobStreamRes
       if (reconnectAttemptRef.current < maxReconnectAttempts) {
         const delay = Math.min(1000 * Math.pow(2, reconnectAttemptRef.current), 30000)
         reconnectAttemptRef.current++
-        console.log(`[JobStream] Reconnecting in ${delay}ms (attempt ${reconnectAttemptRef.current})`)
         setTimeout(connect, delay)
       }
     }

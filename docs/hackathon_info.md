@@ -53,3 +53,27 @@ Learning Journey: Demonstrate your problem-solving approach and growth mindset, 
 Technical Excellence: Quality of implementation matters. We evaluate code quality, workflow efficiency, use of Motia's observability and state features, scalability, and integration depth.
 >
 Developer Experience: How intuitive is your project? Whether it's API design, workflow visualization, dashboards, or developer tools—polish and usability count.
+
+# rules
+Projects should meaningfully use Motia's core model of Steps and Workflows. Using the Motia CLI and showcasing unified flows that tie together APIs, background jobs, scheduled tasks, events, or AI agents will score higher, since that's the heart of Motia.
+You must build a new project during the hackathon. Repackaging or lightly modifying an existing project is not allowed.
+All design elements, code, and assets for your project must be created during the event. You may use third-party tools, frameworks, open-source libraries, public APIs, and publicly available assets such as Creative Commons images, fonts, datasets, or music.
+Teams can plan and discuss ideas in advance, but coding and design work should start only after the hackathon begins. Written notes, sketches, architecture diagrams, and workflow drafts are allowed before kickoff.
+Projects must involve building software that runs on Motia as the backend framework. You can mix languages inside one project when it helps your workflow. Hardware components are optional.
+Teams may consist of 1–4 members.
+Any intellectual property developed during the hackathon belongs to the team that created it. Teams are encouraged to agree internally on IP ownership, though this is not mandatory.
+Please treat all participants with respect. Act kindly and professionally. Harassment, discrimination, or exclusionary behavior of any kind will not be tolerated. If you see something concerning, notify an organizer immediately.
+Due to legal restrictions, residents or organizations from the following locations are ineligible to participate or receive prizes in the Hackathon: Russia, Crimea, Cuba, Iran, North Korea, Syria, or any other country or area prohibited by the United States or United States Treasury's Office of Foreign Assets Control.
+Failure to follow these rules or the Code of Conduct may result in disqualification.
+
+# submission details
+
+## Project description
+Need to provide project description. 
+
+## YouTube video demo
+The video should be not be more than 3 minutes covering how your project reflects the below points:
+About the project
+Tech stack and architecture
+Demo if possible
+Learning and growth (optional)

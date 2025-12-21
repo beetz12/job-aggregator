@@ -1,5 +1,6 @@
 import type { EventConfig, Handlers } from 'motia'
 import { z } from 'zod'
+import { updateSourceStatus } from '../services/database'
 
 const inputSchema = z.object({
   source: z.string(),
@@ -51,12 +52,15 @@ export const handler: Handlers['FetchArbeitnow'] = async (input, { emit, logger,
 
     logger.info('Fetched jobs from Arbeitnow', { count: data.data.length })
 
-    // Update source metadata
+    // Update source metadata in state
     await state.set('sources', 'arbeitnow', {
       lastFetch: new Date().toISOString(),
       jobCount: data.data.length,
       status: 'success'
     })
+
+    // Also update database
+    await updateSourceStatus('arbeitnow', 'success', data.data.length)
 
     // Emit each job for normalization
     for (const job of data.data) {
@@ -77,5 +81,8 @@ export const handler: Handlers['FetchArbeitnow'] = async (input, { emit, logger,
       status: 'error',
       error: errorMessage
     })
+
+    // Also update database
+    await updateSourceStatus('arbeitnow', 'error', 0, errorMessage)
   }
 }

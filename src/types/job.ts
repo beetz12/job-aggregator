@@ -12,11 +12,14 @@ export const jobSchema = z.object({
   remote: z.boolean(),
   url: z.string(),
   description: z.string(),
-  source: z.enum(['arbeitnow', 'hackernews', 'reddit']),
+  source: z.enum(['arbeitnow', 'hackernews', 'reddit', 'remotive']),
   postedAt: z.string(),
   fetchedAt: z.string(),
   tags: z.array(z.string()),
-  healthScore: z.number().min(0).max(100)
+  healthScore: z.number().min(0).max(100),
+  // AI-enhanced fields (optional, populated by AI steps)
+  aiSummary: z.string().optional(),
+  skills: z.array(z.string()).optional(),
 })
 
 export type Job = z.infer<typeof jobSchema>

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import Providers from './providers'
 import Header from '@/components/Header'
+import ConnectionStatusBanner from '@/components/ConnectionStatusBanner'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -21,6 +22,7 @@ export default function RootLayout({
       <body className={`${inter.className} bg-gray-900 text-white`}>
         <Providers>
           <div className="min-h-screen flex flex-col">
+            <ConnectionStatusBanner />
             <Header />
             <main className="flex-1">
               {children}

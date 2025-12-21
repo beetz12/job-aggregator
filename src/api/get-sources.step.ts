@@ -27,7 +27,7 @@ export const config: ApiRouteConfig = {
   }
 }
 
-const AVAILABLE_SOURCES = ['arbeitnow', 'hackernews', 'reddit']
+const AVAILABLE_SOURCES = ['arbeitnow', 'hackernews', 'reddit', 'remotive']
 
 export const handler: Handlers['GetSources'] = async (_, { state, logger }) => {
   logger.info('Fetching source statuses')

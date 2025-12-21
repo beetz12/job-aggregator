@@ -1,4 +1,11 @@
-
+# add more features
+ok perfect. my goal is to build the full stack solution described in @docs/job_aggregator.md. We have already made significant progress by getting the                                                                    
+'/Users/dave/Work/job-aggregator/docs/plans/FEATURE_JOB_AGGREGATOR_HACKATHON.md' to work. However, I want to add additional features to get us closer to our goal while leveraging motia from                               
+'/Users/dave/Work/job-aggregator/docs/hackathon_info.md'. Please analyze '/Users/dave/Work/job-aggregator/docs/temp_prompts.md' It helped me come up with 5 more features we can implement that will significantly          
+enhance the app's utility and value, Whether it's scraping from more sources, Using AI to recommend jobs to candidates, Automatically applying for jobs, or anything else that motia can help us with. Please analyze       
+these issues                                                                                                                                                                                                                
+using your  multi-agent team with up to 3 agents and come up with a unified plan with 90% confidence and wait for further instructions.  Use Perplexity Deep to research if needed. My mortgage payment depends on this     
+and If you get this right on the first try, I will tip you $200. ultrathink       
 
 # analyze and come up with plan
 Please analyze these issues  

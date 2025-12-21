@@ -1,6 +1,8 @@
 import type { ApiRouteConfig, Handlers } from 'motia'
 import { z } from 'zod'
 import { jobSchema, type Job } from '../types/job'
+import { getJobsFromDB } from '../services/database'
+import { isSupabaseConfigured } from '../services/supabase'
 
 const responseSchema = z.object({
   jobs: z.array(jobSchema),
@@ -34,9 +36,39 @@ export const handler: Handlers['GetJobs'] = async (req, { state, logger }) => {
 
   logger.info('Fetching jobs', { search, source, remote, limit, offset })
 
+  // Get jobs from Motia state (hot cache)
   let jobs = await state.getGroup<Job>('jobs')
 
-  // Apply search filter first
+  // =========================================================================
+  // DATABASE HYDRATION: If state is empty, load from database
+  // =========================================================================
+  if (jobs.length === 0 && isSupabaseConfigured()) {
+    logger.info('Motia state empty, hydrating from database')
+
+    try {
+      // Load jobs from database (get more than needed for filtering)
+      const dbJobs = await getJobsFromDB({ limit: 1000 })
+
+      if (dbJobs.length > 0) {
+        logger.info('Loaded jobs from database', { count: dbJobs.length })
+
+        // Populate Motia state for future fast reads
+        for (const job of dbJobs) {
+          await state.set('jobs', job.id, job)
+        }
+
+        jobs = dbJobs
+        logger.info('Hydrated Motia state from database', { count: jobs.length })
+      }
+    } catch (error) {
+      logger.error('Failed to hydrate from database', {
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
+      // Continue with empty state
+    }
+  }
+
+  // Apply search filter
   if (search) {
     const searchLower = search.toLowerCase()
     jobs = jobs.filter(j =>
@@ -46,10 +78,12 @@ export const handler: Handlers['GetJobs'] = async (req, { state, logger }) => {
     )
   }
 
-  // Apply filters
+  // Apply source filter
   if (source) {
     jobs = jobs.filter(j => j.source === source)
   }
+
+  // Apply remote filter
   if (remote === 'true') {
     jobs = jobs.filter(j => j.remote === true)
   }

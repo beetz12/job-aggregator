@@ -1,5 +1,6 @@
 import type { EventConfig, Handlers } from 'motia'
 import { z } from 'zod'
+import { updateSourceStatus } from '../services/database'
 
 const inputSchema = z.object({
   source: z.string(),
@@ -78,12 +79,16 @@ export const handler: Handlers['FetchReddit'] = async (input, { emit, logger, st
         const title = post.data.title.toLowerCase()
         const flair = (post.data.link_flair_text || '').toLowerCase()
 
+        // Exclude job seekers posts (people looking for work)
+        if (title.includes('[for hire]')) {
+          return false
+        }
+
         // Look for hiring indicators
         return (
           title.includes('[hiring]') ||
-          title.includes('[for hire]') === false && // Exclude "for hire" (job seekers)
           flair.includes('hiring') ||
-          (subreddit === 'remotejs') // remotejs is all job postings
+          subreddit === 'remotejs' // remotejs is all job postings
         )
       })
 
@@ -125,13 +130,17 @@ export const handler: Handlers['FetchReddit'] = async (input, { emit, logger, st
     }
   }
 
-  // Update source metadata
+  // Update source metadata in state
   await state.set('sources', 'reddit', {
     lastFetch: new Date().toISOString(),
     jobCount: totalJobsFound,
     status: totalJobsFound > 0 ? 'success' : 'error',
     error: totalJobsFound === 0 ? 'No jobs found' : undefined
   })
+
+  // Also update database
+  const redditStatus = totalJobsFound > 0 ? 'success' : 'error'
+  await updateSourceStatus('reddit', redditStatus, totalJobsFound, totalJobsFound === 0 ? 'No jobs found' : undefined)
 
   logger.info('Reddit fetch completed', { totalJobs: totalJobsFound })
 }

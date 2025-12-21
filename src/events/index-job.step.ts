@@ -2,6 +2,8 @@ import type { EventConfig, Handlers } from 'motia'
 import { z } from 'zod'
 import { createHash } from 'crypto'
 import { jobSchema, type Job } from '../types/job'
+import { upsertJob } from '../services/database'
+import { isSupabaseConfigured } from '../services/supabase'
 
 const inputSchema = z.object({
   job: jobSchema
@@ -10,9 +12,9 @@ const inputSchema = z.object({
 export const config: EventConfig = {
   type: 'event',
   name: 'IndexJob',
-  description: 'Stores normalized job in state with deduplication',
+  description: 'Stores normalized job in state and database with deduplication',
   subscribes: ['index-job'],
-  emits: [],
+  emits: ['job-indexed'],
   input: inputSchema,
   flows: ['job-aggregation']
 }
@@ -31,62 +33,93 @@ function generateDuplicateHash(job: Job): string {
   return createHash('md5').update(content).digest('hex').substring(0, 16)
 }
 
-export const handler: Handlers['IndexJob'] = async (input, { state, streams, logger }) => {
+export const handler: Handlers['IndexJob'] = async (input, { state, streams, logger, emit }) => {
   const { job } = input
-
   const duplicateHash = generateDuplicateHash(job)
 
   logger.info('Indexing job', {
     jobId: job.id,
     title: job.title,
     company: job.company,
-    duplicateHash
+    duplicateHash,
+    supabaseEnabled: isSupabaseConfigured()
   })
 
-  // Check for existing jobs with same content hash (potential duplicates)
+  // =========================================================================
+  // STEP 1: Database Deduplication (Primary - survives restarts)
+  // =========================================================================
+  if (isSupabaseConfigured()) {
+    try {
+      const result = await upsertJob(job)
+
+      if (result && !result.inserted) {
+        // Job already exists in database - just update Motia state for consistency
+        logger.info('Job exists in database, updating state only', {
+          jobId: job.id,
+          contentHash: duplicateHash
+        })
+
+        // Update Motia state to stay in sync
+        await state.set('jobs', job.id, job)
+
+        // Don't emit job-indexed for existing jobs (no AI re-processing needed)
+        return
+      }
+
+      if (result?.inserted) {
+        logger.info('New job inserted into database', { jobId: job.id })
+      }
+    } catch (error) {
+      logger.error('Database upsert failed, falling back to state-only', {
+        jobId: job.id,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      })
+      // Continue with state-only indexing as fallback
+    }
+  }
+
+  // =========================================================================
+  // STEP 2: Motia State Deduplication (Secondary - within session)
+  // =========================================================================
   const existingJobs = await state.getGroup<Job>('jobs')
   const existingDuplicate = existingJobs.find(existing => {
-    // Skip if same job ID (update case)
     if (existing.id === job.id) return false
-    // Check content-based hash match
     return generateDuplicateHash(existing) === duplicateHash
   })
 
   if (existingDuplicate) {
-    // Duplicate found - keep the one with higher health score or newer posting
     const keepExisting =
       existingDuplicate.healthScore > job.healthScore ||
       (existingDuplicate.healthScore === job.healthScore &&
        new Date(existingDuplicate.postedAt) > new Date(job.postedAt))
 
     if (keepExisting) {
-      logger.info('Duplicate job detected, keeping existing', {
+      logger.info('Duplicate job in state, keeping existing', {
         newJobId: job.id,
         existingJobId: existingDuplicate.id,
         reason: 'existing has higher score or newer posting'
       })
-      return // Don't index the duplicate
+      return
     } else {
-      // Remove the old duplicate, index the new one
-      logger.info('Duplicate job detected, replacing with newer/better version', {
+      logger.info('Duplicate job in state, replacing with newer/better version', {
         newJobId: job.id,
         oldJobId: existingDuplicate.id
       })
       await state.delete('jobs', existingDuplicate.id)
-      // Also remove from streams
       await streams.jobs.delete('all', existingDuplicate.id)
       await streams.jobs.delete(existingDuplicate.source, existingDuplicate.id)
     }
   }
 
-  // Store job in state
+  // =========================================================================
+  // STEP 3: Store in Motia State (hot cache for fast reads)
+  // =========================================================================
   await state.set('jobs', job.id, job)
 
-  // Stream the job to connected clients for real-time updates
-  // GroupId 'all' for clients subscribing to all jobs
+  // =========================================================================
+  // STEP 4: Stream to connected clients (real-time updates)
+  // =========================================================================
   await streams.jobs.set('all', job.id, job)
-
-  // Also stream to source-specific group for filtered subscriptions
   await streams.jobs.set(job.source, job.id, job)
 
   logger.info('Job indexed and streamed successfully', {
@@ -94,4 +127,22 @@ export const handler: Handlers['IndexJob'] = async (input, { state, streams, log
     source: job.source,
     wasDuplicate: !!existingDuplicate
   })
+
+  // =========================================================================
+  // STEP 5: Emit event for AI summarization (only for NEW jobs)
+  // =========================================================================
+  await emit({
+    topic: 'job-indexed',
+    data: {
+      jobId: job.id,
+      title: job.title,
+      company: job.company,
+      description: job.description,
+      location: job.location,
+      remote: job.remote,
+      tags: job.tags
+    }
+  })
+
+  logger.info('Emitted job-indexed event for summarization', { jobId: job.id })
 }

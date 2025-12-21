@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useCallback, useMemo, useEffect } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useJobs } from '@/hooks/useJobs'
 import { useJobStream } from '@/hooks/useJobStream'
 import JobList from '@/components/JobList'
 import SearchBar from '@/components/SearchBar'
+import ApiErrorAlert from '@/components/ApiErrorAlert'
 import { JobFilters, Job } from '@/lib/types'
 
 export default function JobsPage() {
@@ -12,7 +13,7 @@ export default function JobsPage() {
   const [newJobCount, setNewJobCount] = useState(0)
 
   // Fetch initial jobs via REST API
-  const { data, isLoading, refetch } = useJobs({
+  const { data, isLoading, error, refetch } = useJobs({
     ...filters,
     limit: 50,
   })
@@ -82,6 +83,14 @@ export default function JobsPage() {
           </span>
           <span className="text-blue-200">Click to refresh</span>
         </button>
+      )}
+
+      {error && (
+        <ApiErrorAlert
+          error={error}
+          onRetry={() => refetch()}
+          className="mb-6"
+        />
       )}
 
       <SearchBar
