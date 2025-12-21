@@ -2,6 +2,10 @@
 # Uses the official Motia Docker image with Node.js + Python polyglot support
 FROM motiadev/motia:latest
 
+# Cache buster - change this value to force Railway to rebuild
+ARG CACHEBUST=20251221-v2
+RUN echo "Cache bust: $CACHEBUST"
+
 WORKDIR /app
 
 # Install curl for health checks
