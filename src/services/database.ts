@@ -1,4 +1,4 @@
-import { query, isSupabaseConfigured } from './supabase'
+import { query, isSupabaseConfigured } from './postgres'
 import crypto from 'crypto'
 import type { Job, SourceMetadata } from '../types/job'
 

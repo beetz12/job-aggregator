@@ -2,7 +2,7 @@ import type { ApiRouteConfig, Handlers } from 'motia'
 import { z } from 'zod'
 import { jobSchema, type Job } from '../types/job'
 import { getJobsFromDB } from '../services/database'
-import { isSupabaseConfigured } from '../services/supabase'
+import { isSupabaseConfigured } from '../services/postgres'
 
 const responseSchema = z.object({
   jobs: z.array(jobSchema),

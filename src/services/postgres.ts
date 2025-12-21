@@ -10,7 +10,7 @@ let pool: Pool | null = null
 
 /**
  * Get PostgreSQL pool instance (singleton)
- * Uses DATABASE_URL for direct connection to Supabase PostgreSQL
+ * Works with Neon, Supabase, or any PostgreSQL database
  */
 export function getPool(): Pool | null {
   if (!databaseUrl) {
@@ -21,11 +21,11 @@ export function getPool(): Pool | null {
     pool = new Pool({
       connectionString: databaseUrl,
       ssl: {
-        rejectUnauthorized: false // Required for Supabase
+        rejectUnauthorized: false // Required for cloud PostgreSQL (Neon, Supabase)
       },
-      max: 5, // Reduced for Railway
+      max: 5, // Reduced for serverless/Railway
       idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 15000, // Increased timeout
+      connectionTimeoutMillis: 15000,
     })
 
     // Handle pool errors
@@ -68,15 +68,18 @@ export async function getClient(): Promise<PoolClient | null> {
 /**
  * Check if database is configured
  */
-export function isSupabaseConfigured(): boolean {
+export function isDatabaseConfigured(): boolean {
   return !!databaseUrl
 }
+
+// Backward compatibility alias
+export const isSupabaseConfigured = isDatabaseConfigured
 
 /**
  * Log database configuration status (call on startup)
  */
-export function logSupabaseStatus(): void {
-  if (isSupabaseConfigured()) {
+export function logDatabaseStatus(): void {
+  if (isDatabaseConfigured()) {
     // Extract host from connection string for logging (hide credentials)
     const hostMatch = databaseUrl?.match(/@([^:\/]+)/)
     const host = hostMatch ? hostMatch[1] : 'configured'
@@ -86,6 +89,9 @@ export function logSupabaseStatus(): void {
     console.warn('[Database] Set DATABASE_URL in .env')
   }
 }
+
+// Backward compatibility alias
+export const logSupabaseStatus = logDatabaseStatus
 
 /**
  * Gracefully close pool on shutdown

@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { createHash } from 'crypto'
 import { jobSchema, type Job } from '../types/job'
 import { upsertJob } from '../services/database'
-import { isSupabaseConfigured } from '../services/supabase'
+import { isSupabaseConfigured } from '../services/postgres'
 
 const inputSchema = z.object({
   job: jobSchema
