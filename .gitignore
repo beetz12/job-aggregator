@@ -19,6 +19,7 @@ __pycache__
 .env
 .env.local
 .env.*.local
+.env.prod
 
 # IDE
 .idea/
@@ -36,3 +37,6 @@ frontend/out/
 
 # Recordings
 recordings
+
+# error logs
+error_logs.txt
