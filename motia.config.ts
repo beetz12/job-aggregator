@@ -16,8 +16,10 @@ console.log(`[Startup] DATABASE_URL configured: ${!!process.env.DATABASE_URL}`)
 const startupTime = new Date().toISOString()
 
 export default defineConfig({
-  // BullMQ disabled until Redis is confirmed working
-  plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin],
+  // TEMPORARILY DISABLED ALL PLUGINS FOR DEBUGGING
+  // If this works, we know a plugin is causing the crash
+  plugins: [],
+  // plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin],
   app: (app) => {
     console.log('[Startup] Registering Express middleware and routes...')
 
