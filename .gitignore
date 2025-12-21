@@ -33,3 +33,6 @@ Thumbs.db
 # Next.js (frontend)
 frontend/.next/
 frontend/out/
+
+# Recordings
+recordings
