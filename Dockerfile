@@ -4,9 +4,9 @@ FROM motiadev/motia:latest
 
 WORKDIR /app
 
-# Install Dependencies (production only)
+# Install ALL Dependencies (need dev deps for TypeScript build)
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci
 
 # Copy Python requirements and install
 COPY requirements.txt ./
