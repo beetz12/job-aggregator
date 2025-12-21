@@ -9,7 +9,9 @@
       "package-lock.json",
       "motia.config.ts",
       "requirements.txt",
-      "types.d.ts"
+      "types.d.ts",
+      "Dockerfile",
+      "railway.json"
     ]
   },
   "deploy": {
