@@ -3,10 +3,11 @@ import endpointPlugin from '@motiadev/plugin-endpoint/plugin'
 import logsPlugin from '@motiadev/plugin-logs/plugin'
 import observabilityPlugin from '@motiadev/plugin-observability/plugin'
 import statesPlugin from '@motiadev/plugin-states/plugin'
-import bullmqPlugin from '@motiadev/plugin-bullmq/plugin'
+// import bullmqPlugin from '@motiadev/plugin-bullmq/plugin'  // Temporarily disabled - requires Redis
 
 export default defineConfig({
-  plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin, bullmqPlugin],
+  // BullMQ disabled until Redis is confirmed working
+  plugins: [observabilityPlugin, statesPlugin, endpointPlugin, logsPlugin],
   app: (app) => {
     // Enable CORS for all routes - handles preflight OPTIONS requests automatically
     app.use((_req, res, next) => {
