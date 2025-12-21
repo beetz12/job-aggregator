@@ -1,416 +1,540 @@
-# 🚀 Job Aggregator
+# Job Aggregator
 
 > **Real-time AI-powered job aggregation platform built on Motia**
+>
 > *Backend Reloaded Hackathon 2024*
 
-[![Motia](https://img.shields.io/badge/Powered%20by-Motia-6366f1?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48Y2lyY2xlIGN4PSIxMiIgY3k9IjEyIiByPSIxMCIgZmlsbD0id2hpdGUiLz48L3N2Zz4=)](https://motia.dev)
+[![Motia](https://img.shields.io/badge/Powered%20by-Motia-6366f1?style=for-the-badge)](https://motia.dev)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178c6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Next.js](https://img.shields.io/badge/Next.js-14-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Claude AI](https://img.shields.io/badge/Claude-3.5%20Sonnet-cc785c?style=for-the-badge&logo=anthropic&logoColor=white)](https://anthropic.com)
-[![Supabase](https://img.shields.io/badge/Supabase-Optional-3fcf8e?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com)
+[![Python](https://img.shields.io/badge/Python-3.11-3776ab?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
+[![Claude AI](https://img.shields.io/badge/Claude-3.5%20Sonnet-cc785c?style=for-the-badge)](https://anthropic.com)
 
 ---
 
-## 📋 Overview
+## Live Demo
 
-Job Aggregator is a **real-time job aggregation platform** that demonstrates the power of Motia's unified backend runtime. It aggregates jobs from multiple free APIs, enhances them with AI-powered features, and provides personalized job matching with application tracking.
-
-**Built for developers, by developers.** Stop jumping between job boards - get everything in one intelligent feed.
-
----
-
-## ✨ Features
-
-### 🔄 Multi-Source Job Aggregation
-- **4 Free APIs**: Arbeitnow, Reddit (r/forhire), Remotive, HackerNews ("Who's Hiring")
-- **Automatic deduplication** using content hashing
-- **Real-time streaming** via WebSocket
-- **Health scoring** (0-100) for job freshness
-
-### 🤖 AI-Powered Intelligence (Claude 3.5 Sonnet)
-- **Smart job summaries** - Key requirements, red flags, salary insights
-- **Cover letter generator** - Personalized letters with skill matching
-- **Intelligent matching** - Profile-based job scoring algorithm
-
-### 👤 Personalized Experience
-- **User profiles** - Skills, seniority, location preferences
-- **Match scoring** - 0-100 compatibility score per job
-- **Skill breakdown** - See exactly why jobs match your profile
-
-### 📊 Application Tracking
-- **Status management** - Applied, Interview, Offer, Rejected
-- **Follow-up reminders** - Daily cron job for due follow-ups
-- **Application notes** - Track your progress per company
-
-### 🏗️ Polyglot Architecture
-- **TypeScript + Python** in one runtime (Motia magic!)
-- **Event-driven** - Loosely coupled, highly scalable
-- **Built-in observability** - Motia Workbench visualization
-
----
-
-## 🛠️ Tech Stack
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| **Runtime** | [Motia](https://motia.dev) | Unified backend - APIs, Events, Cron, Streams |
-| **Frontend** | Next.js 14 + Tailwind CSS | Modern React with TanStack Query |
-| **AI** | Claude 3.5 Sonnet | Summaries, cover letters, analysis |
-| **Database** | Supabase (optional) | Persistent storage with real-time |
-| **State** | Motia State Management | High-speed caching layer |
-| **Validation** | Zod | Runtime type safety |
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-- (Optional) Anthropic API key for AI features
-- (Optional) Supabase project for persistence
-
-### Installation
+**Backend API**: `https://your-app.railway.app`
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/job-aggregator.git
-cd job-aggregator
+# Quick test - get all jobs
+curl https://your-app.railway.app/jobs | jq
 
-# Install dependencies
-npm install
-
-# Install frontend dependencies
-cd frontend && npm install && cd ..
-
-# Copy environment file
-cp .env.example .env
+# Health check
+curl https://your-app.railway.app/health
 ```
 
-### Configuration
+---
 
-Create a `.env` file with:
+## What It Does
 
-```env
-# Optional: AI Features (Claude)
-ANTHROPIC_API_KEY=your_anthropic_key
+Job Aggregator solves a real developer problem: **too many job boards, not enough time**. It unifies jobs from 4 free APIs into one intelligent feed with AI-powered features.
 
-# Optional: Database Persistence
-SUPABASE_URL=your_supabase_url
-SUPABASE_ANON_KEY=your_supabase_anon_key
-```
+### Core Features
 
-### Running the Application
+| Feature | Description |
+|---------|-------------|
+| **Multi-Source Aggregation** | Arbeitnow, Reddit, Remotive, HackerNews |
+| **Smart Deduplication** | Content-hash based - same job from multiple sources appears once |
+| **AI Summaries** | Claude extracts key requirements, red flags, salary hints |
+| **Profile Matching** | Create a profile, get jobs ranked by compatibility (0-100) |
+| **Cover Letter Generator** | AI-powered personalized cover letters |
+| **Application Tracking** | Track status, notes, follow-up reminders |
+| **Polyglot Runtime** | TypeScript + Python in one Motia project |
+
+---
+
+## API Reference
+
+All endpoints return JSON. Base URL: `https://your-app.railway.app`
+
+### Health Check
 
 ```bash
-# Start Motia backend (port 4000)
-npm run dev
-
-# In another terminal - Start Next.js frontend (port 3000)
-npm run dev:frontend
-
-# Or run both concurrently
-npm run dev:all
+curl https://your-app.railway.app/health
 ```
 
-Visit:
-- **Frontend**: http://localhost:3000
-- **Motia Workbench**: http://localhost:4000 (observability dashboard)
+**Response:**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-12-20T10:30:00.000Z",
+  "version": "1.0.0"
+}
+```
 
 ---
 
-## 📡 API Endpoints
+### Jobs API
 
-### Jobs
+#### List Jobs
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/jobs` | List jobs with filters (search, source, remote) |
-| `GET` | `/jobs/:id` | Get job details |
-| `POST` | `/jobs/:id/cover-letter` | Generate AI cover letter |
+```bash
+# Get all jobs (default: 50)
+curl https://your-app.railway.app/jobs
 
-### Sources
+# With filters
+curl "https://your-app.railway.app/jobs?source=arbeitnow&remote=true&limit=10"
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/sources` | Get all source statuses |
-| `POST` | `/sources/:name/refresh` | Trigger manual refresh |
+# Search
+curl "https://your-app.railway.app/jobs?search=react"
+```
 
-### Profile & Matching
+**Query Parameters:**
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/profile` | Create user profile |
-| `GET` | `/profile/:id` | Get profile details |
-| `PUT` | `/profile/:id` | Update profile |
-| `GET` | `/jobs/matched` | Get jobs ranked by match score |
+| Param | Type | Description |
+|-------|------|-------------|
+| `search` | string | Search in title, company, description |
+| `source` | string | Filter by source: `arbeitnow`, `hackernews`, `reddit`, `remotive` |
+| `remote` | boolean | `true` for remote jobs only |
+| `limit` | number | Results per page (default: 50) |
+| `offset` | number | Pagination offset (default: 0) |
 
-### Applications
+**Response:**
+```json
+{
+  "jobs": [
+    {
+      "id": "arbeitnow_12345",
+      "title": "Senior React Developer",
+      "company": "TechCorp",
+      "location": "Berlin, Germany",
+      "remote": true,
+      "url": "https://arbeitnow.com/jobs/12345",
+      "description": "We're looking for a senior React developer...",
+      "source": "arbeitnow",
+      "postedAt": "2024-12-19T08:00:00.000Z",
+      "fetchedAt": "2024-12-20T10:00:00.000Z",
+      "tags": ["react", "typescript", "remote"],
+      "healthScore": 95
+    }
+  ],
+  "total": 150,
+  "sources": ["arbeitnow", "remotive", "reddit"],
+  "lastUpdated": "2024-12-20T10:30:00.000Z"
+}
+```
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/applications` | List all applications |
-| `POST` | `/applications` | Create application |
-| `PUT` | `/applications/:id` | Update application status |
-| `DELETE` | `/applications/:id` | Delete application |
+#### Get Single Job
 
-### System
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/health` | Health check |
+```bash
+curl https://your-app.railway.app/jobs/arbeitnow_12345
+```
 
 ---
 
-## 🏛️ Architecture
+### Sources API
+
+#### List Source Status
+
+```bash
+curl https://your-app.railway.app/sources
+```
+
+**Response:**
+```json
+{
+  "sources": [
+    {
+      "name": "arbeitnow",
+      "status": "success",
+      "lastFetch": "2024-12-20T10:00:00.000Z",
+      "jobCount": 85,
+      "error": null
+    },
+    {
+      "name": "remotive",
+      "status": "success",
+      "lastFetch": "2024-12-20T10:00:00.000Z",
+      "jobCount": 42,
+      "error": null
+    }
+  ]
+}
+```
+
+#### Trigger Manual Refresh
+
+```bash
+# Refresh specific source
+curl -X POST https://your-app.railway.app/sources/arbeitnow/refresh
+
+# Refresh ALL sources
+curl -X POST https://your-app.railway.app/sources/all/refresh
+```
+
+**Response:**
+```json
+{
+  "message": "Refresh initiated",
+  "source": "arbeitnow"
+}
+```
+
+---
+
+### Profile API
+
+#### Create Profile
+
+```bash
+curl -X POST https://your-app.railway.app/profile \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Jane Developer",
+    "title": "Full Stack Engineer",
+    "skills": ["typescript", "react", "node.js", "python"],
+    "experienceYears": 5,
+    "seniorityLevel": "senior",
+    "remotePreference": "remote-only",
+    "preferredLocations": ["Berlin", "Remote"]
+  }'
+```
+
+**Response:**
+```json
+{
+  "profile": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Jane Developer",
+    "skills": ["typescript", "react", "node.js", "python"],
+    "seniorityLevel": "senior",
+    "createdAt": "2024-12-20T10:30:00.000Z"
+  },
+  "created": true
+}
+```
+
+#### Get Matched Jobs
+
+```bash
+curl "https://your-app.railway.app/profile/550e8400-e29b-41d4/matches?limit=10"
+```
+
+**Response:**
+```json
+{
+  "matches": [
+    {
+      "job": { "id": "arbeitnow_12345", "title": "Senior React Developer", ... },
+      "score": 92,
+      "matchedSkills": ["react", "typescript"],
+      "reasons": ["5+ years experience matches senior role", "Remote position matches preference"]
+    }
+  ],
+  "profileId": "550e8400-e29b-41d4",
+  "total": 45
+}
+```
+
+---
+
+### Cover Letter API
+
+#### Generate AI Cover Letter
+
+```bash
+curl -X POST https://your-app.railway.app/jobs/arbeitnow_12345/cover-letter \
+  -H "Content-Type: application/json" \
+  -d '{
+    "profileId": "550e8400-e29b-41d4",
+    "tone": "professional",
+    "emphasis": ["typescript expertise", "remote work experience"]
+  }'
+```
+
+**Response:**
+```json
+{
+  "coverLetter": "Dear Hiring Manager,\n\nI am excited to apply for the Senior React Developer position...",
+  "jobId": "arbeitnow_12345",
+  "profileId": "550e8400-e29b-41d4",
+  "generatedAt": "2024-12-20T10:35:00.000Z"
+}
+```
+
+---
+
+### Applications API
+
+#### Create Application
+
+```bash
+curl -X POST https://your-app.railway.app/applications \
+  -H "Content-Type: application/json" \
+  -d '{
+    "jobId": "arbeitnow_12345",
+    "profileId": "550e8400-e29b-41d4",
+    "status": "applied",
+    "notes": "Applied via company website"
+  }'
+```
+
+#### List Applications
+
+```bash
+# All applications
+curl https://your-app.railway.app/applications
+
+# Filter by status
+curl "https://your-app.railway.app/applications?status=interviewing"
+```
+
+#### Update Application
+
+```bash
+curl -X PUT https://your-app.railway.app/applications/app_123 \
+  -H "Content-Type: application/json" \
+  -d '{
+    "status": "interviewing",
+    "notes": "Phone screen scheduled for Monday",
+    "followUpDate": "2024-12-23"
+  }'
+```
+
+---
+
+## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                           JOB AGGREGATOR ARCHITECTURE                         │
-├──────────────────────────────────────────────────────────────────────────────┤
-│                                                                              │
-│  ┌─────────────────┐        ┌─────────────────────────────────────────────┐  │
-│  │   NEXT.JS 14    │        │              MOTIA BACKEND                  │  │
-│  │   (Port 3000)   │        │              (Port 4000)                    │  │
-│  │                 │        │                                             │  │
-│  │  /app           │  REST  │  ┌─────────────────────────────────────┐   │  │
-│  │   ├─ /         ─┼───────►│  │            API STEPS                 │   │  │
-│  │   ├─ /jobs     ─┤        │  │  • GET /jobs, /jobs/:id              │   │  │
-│  │   ├─ /profile  ─┤        │  │  • POST /profile, /cover-letter      │   │  │
-│  │   ├─ /matches  ─┤        │  │  • GET/POST /applications            │   │  │
-│  │   └─ /sources  ─┤        │  └─────────────────────────────────────┘   │  │
-│  │                 │        │                    │                        │  │
-│  │  TanStack Query │   WS   │                    ▼ emit()                 │  │
-│  │  Real-time      │◄──────►│  ┌─────────────────────────────────────┐   │  │
-│  │                 │        │  │           EVENT STEPS                │   │  │
-│  └─────────────────┘        │  │  • fetch-arbeitnow.step.ts          │   │  │
-│                             │  │  • fetch-reddit.step.ts              │   │  │
-│                             │  │  • fetch-remotive.step.ts            │   │  │
-│                             │  │  • normalize-job.step.ts             │   │  │
-│                             │  │  • index-job.step.ts                 │   │  │
-│                             │  │  • calculate-match-scores.step.ts    │   │  │
-│                             │  │  • summarize-job.step.ts (AI)        │   │  │
-│                             │  └─────────────────────────────────────┘   │  │
-│                             │                    │                        │  │
-│                             │                    ▼                        │  │
-│                             │  ┌─────────────────────────────────────┐   │  │
-│                             │  │           CRON STEPS                 │   │  │
-│                             │  │  • refresh-all-sources (*/30 min)    │   │  │
-│                             │  │  • followup-reminders (daily)        │   │  │
-│                             │  └─────────────────────────────────────┘   │  │
-│                             │                    │                        │  │
-│                             │                    ▼                        │  │
-│                             │  ┌─────────────────────────────────────┐   │  │
-│                             │  │        STATE MANAGEMENT              │   │  │
-│                             │  │  • jobs (hot cache)                  │   │  │
-│                             │  │  • profiles                          │   │  │
-│                             │  │  • match-scores                      │   │  │
-│                             │  │  • applications                      │   │  │
-│                             │  │  • sources (metadata)                │   │  │
-│                             │  └─────────────────────────────────────┘   │  │
-│                             │                    │                        │  │
-│                             │                    ▼                        │  │
-│                             │  ┌─────────────────────────────────────┐   │  │
-│                             │  │     SUPABASE (Optional Persistence)  │   │  │
-│                             │  │  • jobs, profiles, applications      │   │  │
-│                             │  └─────────────────────────────────────┘   │  │
-│                             └─────────────────────────────────────────────┘  │
-│                                                                              │
-│   ┌──────────────────────────────────────────────────────────────────────┐   │
-│   │                         EXTERNAL DATA SOURCES                         │   │
-│   │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────────┐  │   │
-│   │  │ Arbeitnow │  │  Reddit  │  │ Remotive │  │ HackerNews (Planned) │  │   │
-│   │  │  (Free)   │  │  (Free)  │  │  (Free)  │  │       (Free)         │  │   │
-│   │  └──────────┘  └──────────┘  └──────────┘  └──────────────────────┘  │   │
-│   └──────────────────────────────────────────────────────────────────────┘   │
-│                                                                              │
-└──────────────────────────────────────────────────────────────────────────────┘
+                    ┌─────────────────────────────────────────────────────────┐
+                    │                    MOTIA BACKEND                         │
+                    │                    (Port 4000)                           │
+                    ├─────────────────────────────────────────────────────────┤
+                    │                                                          │
+   HTTP Request ───►│  ┌─────────────────────────────────────────────────┐    │
+                    │  │               API STEPS (14)                     │    │
+                    │  │  GET  /jobs              POST /profile           │    │
+                    │  │  GET  /jobs/:id          GET  /profile/:id       │    │
+                    │  │  GET  /sources           POST /cover-letter      │    │
+                    │  │  POST /sources/refresh   CRUD /applications      │    │
+                    │  └──────────────────────┬──────────────────────────┘    │
+                    │                         │                                │
+                    │                    emit()                                │
+                    │                         ▼                                │
+                    │  ┌─────────────────────────────────────────────────┐    │
+                    │  │             EVENT STEPS (9)                      │    │
+                    │  │  TypeScript:                Python:              │    │
+                    │  │  • fetch-arbeitnow         • fetch_hackernews    │    │
+                    │  │  • fetch-reddit                                  │    │
+                    │  │  • fetch-remotive                                │    │
+                    │  │  • normalize-job                                 │    │
+                    │  │  • index-job                                     │    │
+                    │  │  • calculate-match-scores                        │    │
+                    │  │  • summarize-job (AI)                            │    │
+                    │  └──────────────────────┬──────────────────────────┘    │
+                    │                         │                                │
+                    │                         ▼                                │
+                    │  ┌─────────────────────────────────────────────────┐    │
+                    │  │             CRON STEPS (2)                       │    │
+                    │  │  • refresh-all-sources    (every 30 min)        │    │
+                    │  │  • followup-reminders     (daily at 9am)        │    │
+                    │  └──────────────────────┬──────────────────────────┘    │
+                    │                         │                                │
+                    │                         ▼                                │
+                    │  ┌─────────────────────────────────────────────────┐    │
+                    │  │           MOTIA STATE + SUPABASE                 │    │
+                    │  │  In-memory cache ◄──► PostgreSQL persistence    │    │
+                    │  └─────────────────────────────────────────────────┘    │
+                    │                                                          │
+                    └─────────────────────────────────────────────────────────┘
+                                              ▲
+                                              │
+              ┌───────────────────────────────┼───────────────────────────────┐
+              │                               │                               │
+      ┌───────┴───────┐               ┌───────┴───────┐               ┌───────┴───────┐
+      │   Arbeitnow   │               │    Reddit     │               │   Remotive    │
+      │  (Free API)   │               │  (Free API)   │               │  (Free API)   │
+      └───────────────┘               └───────────────┘               └───────────────┘
 ```
 
 ### Event Flow: Job Aggregation
 
 ```
-Cron (*/30 min)
-      │
-      ▼
-fetch-jobs-trigger ──┬──► fetch-arbeitnow ──┐
-                     ├──► fetch-reddit ─────┼──► normalize-job ──► index-job ──► State
-                     └──► fetch-remotive ───┘                          │
-                                                                       ▼
-                                                              Supabase (persist)
-```
-
-### Event Flow: Profile Matching
-
-```
-POST /profile ──► profile-updated ──► calculate-match-scores ──► State (match-scores)
-                                                                        │
-GET /jobs/matched ◄─────────────────────────────────────────────────────┘
-```
-
----
-
-## 📁 Project Structure
-
-```
-job-aggregator/
-├── src/                          # MOTIA BACKEND
-│   ├── api/                      # API Steps (13 endpoints)
-│   │   ├── get-jobs.step.ts
-│   │   ├── get-job-by-id.step.ts
-│   │   ├── generate-cover-letter.step.ts
-│   │   ├── profile.step.ts
-│   │   ├── create-profile.step.ts
-│   │   ├── get-matched-jobs.step.ts
-│   │   ├── list-applications.step.ts
-│   │   ├── create-application.step.ts
-│   │   ├── update-application.step.ts
-│   │   ├── delete-application.step.ts
-│   │   ├── get-sources.step.ts
-│   │   ├── refresh-source.step.ts
-│   │   └── health.step.ts
-│   │
-│   ├── events/                   # Event Steps (9 handlers)
-│   │   ├── fetch-arbeitnow.step.ts
-│   │   ├── fetch-reddit.step.ts
-│   │   ├── fetch-remotive.step.ts
-│   │   ├── normalize-job.step.ts
-│   │   ├── index-job.step.ts
-│   │   ├── calculate-match-scores.step.ts
-│   │   ├── summarize-job.step.ts
-│   │   └── handle-followup-due.step.ts
-│   │
-│   ├── cron/                     # Cron Steps (2 jobs)
-│   │   ├── refresh-all-sources.step.ts
-│   │   └── followup-reminders.step.ts
-│   │
-│   ├── services/                 # Business Logic
-│   │   ├── database.ts
-│   │   └── supabase.ts
-│   │
-│   └── types/                    # Shared Types
-│       ├── job.ts
-│       ├── profile.ts
-│       ├── application.ts
-│       ├── cover-letter.ts
-│       └── job-summary.ts
-│
-├── frontend/                     # NEXT.JS FRONTEND
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── page.tsx          # Dashboard
-│   │   │   ├── jobs/             # Job listings & details
-│   │   │   ├── profile/          # User profile
-│   │   │   ├── matches/          # Matched jobs
-│   │   │   ├── applications/     # Application tracking
-│   │   │   └── sources/          # Source status
-│   │   ├── components/           # Reusable components
-│   │   ├── hooks/                # Custom React hooks
-│   │   └── lib/                  # API client & types
-│   └── package.json
-│
-├── docs/                         # Documentation
-│   └── plans/
-│
-├── motia.config.ts               # Motia configuration
-├── package.json
-└── supabase-schema.sql           # Database schema
+Cron (*/30 min) OR POST /sources/all/refresh
+                    │
+                    ▼
+        ┌─── fetch-jobs-trigger ───┐
+        │           │              │
+        ▼           ▼              ▼
+  fetch-arbeitnow  fetch-reddit  fetch-remotive
+        │           │              │
+        └───────────┼──────────────┘
+                    ▼
+             normalize-job  ──► Content hash deduplication
+                    │
+                    ▼
+               index-job    ──► Motia State + Supabase
+                    │
+                    ▼
+            summarize-job   ──► Claude AI (optional)
 ```
 
 ---
 
-## 📸 Screenshots
+## Deploy to Railway (Backend Only)
 
-*Demo video and screenshots coming soon!*
+### Prerequisites
 
-<!-- Add your screenshots here -->
-<!-- ![Dashboard](./docs/screenshots/dashboard.png) -->
-<!-- ![Job List](./docs/screenshots/jobs.png) -->
-<!-- ![Profile Matching](./docs/screenshots/matching.png) -->
+1. [Railway account](https://railway.app) (free tier: $5/month credit)
+2. GitHub repository with this code
+3. Supabase project for database (free tier works)
 
----
-
-## 🎯 Workflows (Flows)
-
-The application is organized into **3 main flows** visible in Motia Workbench:
-
-| Flow | Steps | Description |
-|------|-------|-------------|
-| `job-aggregation` | 10 | Fetching, normalizing, indexing jobs |
-| `profile-matching` | 4 | Profile management, score calculation |
-| `application-tracking` | 5 | Application CRUD, follow-up reminders |
-
----
-
-## 📚 Learnings & Challenges
-
-### What We Learned
-
-1. **Motia's Unified Runtime is Powerful**
-   Having APIs, events, cron, and state in one framework eliminated the "glue code" nightmare. The event-driven architecture made it trivial to add new data sources.
-
-2. **Polyglot Flexibility**
-   Being able to use Python for complex parsing (HackerNews) alongside TypeScript for type-safe APIs showcases real-world flexibility.
-
-3. **Observability Built-In**
-   Motia Workbench's flow visualization made debugging event chains intuitive. Seeing events flow in real-time is invaluable.
-
-4. **AI Integration Patterns**
-   Designing fallback strategies for when AI APIs are unavailable taught us resilient AI integration patterns.
-
-### Challenges Overcome
-
-- **Rate Limiting**: Implemented intelligent backoff and caching to handle API rate limits gracefully
-- **Deduplication**: Built content-hash based deduplication to handle jobs appearing on multiple sources
-- **State Hydration**: Created a pattern for hydrating Motia state from Supabase on cold starts
-- **Type Safety Across Steps**: Leveraged Zod schemas to maintain type safety across the event chain
-
----
-
-## 🗺️ Roadmap
-
-- [ ] Add HackerNews "Who's Hiring" parser (Python)
-- [ ] Implement real-time WebSocket streaming for new jobs
-- [ ] Add email notifications for matched jobs
-- [ ] Build Chrome extension for "Save Job" functionality
-- [ ] Add AI-powered interview prep suggestions
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please read our contributing guidelines and submit PRs.
+### Step 1: Push to GitHub
 
 ```bash
-# Run tests (coming soon)
-npm test
+git add .
+git commit -m "Deploy to Railway"
+git push origin main
+```
 
-# Generate types after config changes
-npm run generate-types
+### Step 2: Create Railway Project
+
+1. Go to [railway.app/new](https://railway.app/new)
+2. Click **"Deploy from GitHub repo"**
+3. Select your repository
+4. Railway auto-detects the Dockerfile
+
+### Step 3: Configure Environment Variables
+
+In Railway dashboard → your service → **Variables** tab:
+
+| Variable | Required | Value |
+|----------|----------|-------|
+| `DATABASE_URL` | Yes | `postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres` |
+| `ANTHROPIC_API_KEY` | No | `sk-ant-...` (for AI features) |
+
+> Get `DATABASE_URL` from Supabase: Project Settings → Database → Connection String (URI)
+
+### Step 4: Generate Public URL
+
+1. Go to **Settings** → **Networking**
+2. Click **"Generate Domain"**
+3. Your API is now live at: `https://your-project.railway.app`
+
+### Step 5: Initialize Database
+
+Run the schema in Supabase SQL Editor:
+
+```sql
+-- Copy contents of supabase-schema.sql
+-- Run in: https://supabase.com/dashboard/project/_/sql
+```
+
+### Step 6: Verify Deployment
+
+```bash
+# Health check
+curl https://your-project.railway.app/health
+
+# Trigger initial job fetch
+curl -X POST https://your-project.railway.app/sources/all/refresh
+
+# Wait 30 seconds, then get jobs
+curl https://your-project.railway.app/jobs | jq '.total'
 ```
 
 ---
 
-## 📄 License
+## Local Development
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+```bash
+# Install dependencies
+npm install
+
+# Copy environment file
+cp .env.example .env
+# Edit .env with your DATABASE_URL
+
+# Start Motia backend
+npm run dev
+
+# Backend runs at http://localhost:4000
+# Motia Workbench (observability UI) at http://localhost:4000
+```
 
 ---
 
-## 🙏 Acknowledgments
+## Tech Stack
 
-- [Motia](https://motia.dev) - The unified backend runtime that made this possible
-- [Anthropic](https://anthropic.com) - Claude AI for intelligent features
-- [Supabase](https://supabase.com) - Simple and powerful database
-- **Backend Reloaded Hackathon** - For the opportunity to build this!
+| Layer | Technology | Why |
+|-------|------------|-----|
+| **Runtime** | [Motia](https://motia.dev) | Unified APIs, Events, Cron, State in one framework |
+| **Languages** | TypeScript + Python | Polyglot support - best tool for each job |
+| **AI** | Claude 3.5 Sonnet | Summaries, cover letters, analysis |
+| **Database** | Supabase PostgreSQL | Free tier, real-time, great DX |
+| **Validation** | Zod | Runtime type safety across event chains |
 
 ---
 
-<div align="center">
+## Project Structure
 
-**Built with ❤️ for the Backend Reloaded Hackathon 2024**
+```
+src/
+├── api/                    # 14 API Steps
+│   ├── get-jobs.step.ts
+│   ├── get-job-by-id.step.ts
+│   ├── get-sources.step.ts
+│   ├── refresh-source.step.ts
+│   ├── health.step.ts
+│   ├── profile.step.ts
+│   ├── create-profile.step.ts
+│   ├── get-matched-jobs.step.ts
+│   ├── generate-cover-letter.step.ts
+│   ├── list-applications.step.ts
+│   ├── get-application.step.ts
+│   ├── create-application.step.ts
+│   ├── update-application.step.ts
+│   └── delete-application.step.ts
+│
+├── events/                 # 9 Event Steps
+│   ├── fetch-arbeitnow.step.ts
+│   ├── fetch-reddit.step.ts
+│   ├── fetch-remotive.step.ts
+│   ├── fetch_hackernews_step.py   # Python!
+│   ├── normalize-job.step.ts
+│   ├── index-job.step.ts
+│   ├── calculate-match-scores.step.ts
+│   ├── summarize-job.step.ts
+│   └── handle-followup-due.step.ts
+│
+├── cron/                   # 2 Cron Steps
+│   ├── refresh-all-sources.step.ts
+│   └── followup-reminders.step.ts
+│
+├── services/               # Business Logic
+│   ├── database.ts
+│   └── supabase.ts
+│
+└── types/                  # Shared Types
+    ├── job.ts
+    ├── profile.ts
+    └── application.ts
+```
 
-[⬆ Back to Top](#-job-aggregator)
+---
 
-</div>
+## What I Learned
+
+### Motia's Unified Runtime
+Having APIs, background jobs, cron, and state in one framework eliminated the integration complexity. Adding a new data source is just one new event step.
+
+### Polyglot Power
+Python for parsing HackerNews HTML, TypeScript for type-safe APIs. Motia handles the inter-process communication transparently.
+
+### Built-in Observability
+Motia Workbench shows event flows in real-time. Debugging distributed events became visual instead of log-diving.
+
+### AI Integration Patterns
+Designed with graceful degradation - the app works without AI keys, just skips summarization.
+
+---
+
+## License
+
+MIT
+
+---
+
+**Built for the Backend Reloaded Hackathon 2024**
+
+[Motia](https://motia.dev) | [Anthropic](https://anthropic.com) | [Supabase](https://supabase.com)
