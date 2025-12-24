@@ -1,23 +1,62 @@
 # Job Aggregator - Claude AI Guide
 
-This is a **Motia** project for the Backend Reloaded Hackathon - a real-time job aggregation platform.
+This is a **Turborepo monorepo** for the Backend Reloaded Hackathon - a real-time job aggregation platform.
 
 ## Project Overview
 
 **Goal**: Aggregate jobs from free APIs (Arbeitnow, HackerNews, Reddit) into a unified, searchable feed with real-time updates.
 
 **Tech Stack**:
-- **Backend**: Motia (TypeScript + Python polyglot)
-- **Frontend**: Next.js with Tailwind (in `/frontend`)
+- **Monorepo**: Turborepo
+- **Backend**: Motia (TypeScript + Python polyglot) in `apps/backend`
+- **Frontend**: Next.js with Tailwind in `apps/web`
+- **Shared**: TypeScript types in `packages/types`
 - **State**: Motia built-in state management
 - **Streaming**: Real-time job updates
 
 ## Quick Commands
 
 ```bash
-npm run dev              # Start Motia dev server (port 3000)
-npm run start            # Start production server
-npx motia generate-types # Regenerate TypeScript types
+# Root commands (run from project root)
+npm run dev              # Start all apps in development mode
+npm run dev:backend      # Start Motia backend only (port 4000)
+npm run dev:web          # Start Next.js frontend only
+npm run build            # Build all apps
+npm run clean            # Clean all build outputs
+
+# Backend-specific (run from apps/backend)
+cd apps/backend
+npm run dev              # Start Motia dev server (port 4000)
+npm run generate-types   # Regenerate TypeScript types
+
+# Frontend-specific (run from apps/web)
+cd apps/web
+npm run dev              # Start Next.js dev server
+```
+
+## Monorepo Structure
+
+```
+job-aggregator/
+├── apps/
+│   ├── backend/              # Motia backend
+│   │   ├── src/              # Step definitions
+│   │   │   ├── api/          # API endpoints
+│   │   │   ├── events/       # Event handlers
+│   │   │   ├── cron/         # Scheduled tasks
+│   │   │   └── services/     # Business logic
+│   │   ├── motia.config.ts   # Motia configuration
+│   │   └── package.json
+│   └── web/                  # Next.js frontend
+│       ├── src/              # Next.js app
+│       └── package.json
+├── packages/
+│   └── types/                # Shared TypeScript types
+│       └── src/index.ts
+├── turbo.json               # Turborepo configuration
+├── package.json             # Root workspace config
+└── .claude/
+    └── skills/              # Claude Code skills
 ```
 
 ## Development Guides
@@ -63,43 +102,26 @@ endpoint following the patterns shown.
 
 **Full plan**: `docs/plans/FEATURE_JOB_AGGREGATOR_HACKATHON.md`
 
-### Backend Steps to Implement
+### Backend Steps (`apps/backend/src/`)
 
-**API Steps** (`src/api/`):
+**API Steps** (`api/`):
 - `get-jobs.step.ts` - GET /jobs (list with filters)
 - `get-sources.step.ts` - GET /sources (source status)
 - `refresh-source.step.ts` - POST /sources/:name/refresh
 
-**Event Steps** (`src/events/`):
+**Event Steps** (`events/`):
 - `fetch-arbeitnow.step.ts` - Fetch from Arbeitnow API
 - `fetch_hackernews_step.py` - Parse HN "Who's Hiring" (Python)
 - `normalize-job.step.ts` - Normalize to common schema
 - `index-job.step.ts` - Store in state
 
-**Cron Steps** (`src/cron/`):
+**Cron Steps** (`cron/`):
 - `refresh-all-sources.step.ts` - Every 30 minutes
 
-### Frontend (to create in `/frontend`)
+### Frontend (`apps/web/`)
 - Next.js app with dashboard, job list, source status
 - TanStack Query for data fetching
 - Tailwind for styling
-
-## Project Structure
-
-```
-src/
-├── hello/                    # Starter example (working)
-│   ├── hello-api.step.ts     # TypeScript API
-│   ├── process_greeting_step.py  # Python processor
-│   └── log-greeting.step.js  # JavaScript logger
-├── api/                      # API endpoints (to implement)
-├── events/                   # Event handlers (to implement)
-├── cron/                     # Scheduled tasks (to implement)
-├── services/                 # Business logic
-└── types/                    # Shared types (job schema)
-
-frontend/                     # Next.js app (to create)
-```
 
 ## Naming Conventions
 
@@ -107,6 +129,7 @@ frontend/                     # Next.js app (to create)
 - **Python steps**: `snake_case_step.py`
 - **Event topics**: `kebab-case` (e.g., `fetch-jobs-trigger`)
 - **State keys**: `groupId:key` pattern
+- **Packages**: `@job-aggregator/package-name`
 
 ## Key Patterns
 
@@ -132,11 +155,12 @@ const job = await state.get<Job>('jobs', jobId)
 
 ## Critical Rules
 
-- **ALWAYS** run `npx motia generate-types` after config changes
+- **ALWAYS** run `npm run generate-types` from root after config changes
 - **ALWAYS** list emits in config before using in handler
 - **NEVER** use API steps for long-running tasks (use Event steps)
 - **ALWAYS** follow naming conventions for step files
 - **ALWAYS** read the relevant `.cursor/rules/` guide first
+- **ALWAYS** install dependencies from root with `npm install`
 
 ## Data Sources (Free APIs)
 
@@ -157,7 +181,7 @@ interface Job {
   remote: boolean
   url: string
   description: string
-  source: 'arbeitnow' | 'hackernews' | 'reddit'
+  source: 'arbeitnow' | 'hackernews' | 'reddit' | 'googlejobs' | 'wellfound'
   postedAt: string
   fetchedAt: string
   tags: string[]

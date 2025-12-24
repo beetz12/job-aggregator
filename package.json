@@ -1,47 +1,25 @@
 {
-  "name": "job-aggregator",
-  "description": "Real-time job aggregation platform - Backend Reloaded Hackathon",
-  "type": "module",
-  "scripts": {
-    "postinstall": "motia install",
-    "dev": "motia dev -p 4000",
-    "dev:frontend": "cd frontend && npm run dev",
-    "dev:all": "concurrently \"npm run dev\" \"npm run dev:frontend\"",
-    "start": "motia start",
-    "start:frontend": "cd frontend && npm run start",
-    "generate-types": "motia generate-types",
-    "build": "motia build",
-    "build:frontend": "cd frontend && npm run build",
-    "build:all": "npm run build && npm run build:frontend",
-    "clean": "rm -rf dist node_modules python_modules .motia .mermaid",
-    "seed": "npx ts-node scripts/seed-demo-data.ts"
-  },
-  "keywords": [
-    "motia",
-    "job-aggregator",
-    "hackathon"
+  "name": "job-aggregator-monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
   ],
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.71.2",
-    "@motiadev/adapter-bullmq-events": "^0.17.9-beta.191",
-    "@motiadev/core": "^0.17.9-beta.191",
-    "@motiadev/plugin-bullmq": "^0.17.9-beta.191",
-    "@motiadev/plugin-endpoint": "^0.17.9-beta.191",
-    "@motiadev/plugin-logs": "^0.17.9-beta.191",
-    "@motiadev/plugin-observability": "^0.17.9-beta.191",
-    "@motiadev/plugin-states": "^0.17.9-beta.191",
-    "@supabase/supabase-js": "^2.88.0",
-    "fast-xml-parser": "^5.3.3",
-    "motia": "^0.17.9-beta.191",
-    "pg": "^8.16.3",
-    "zod": "^4.1.12"
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:backend": "turbo run dev --filter=@job-aggregator/backend",
+    "dev:web": "turbo run dev --filter=@job-aggregator/web",
+    "lint": "turbo run lint",
+    "test": "turbo run test",
+    "clean": "turbo run clean",
+    "generate-types": "turbo run generate-types"
   },
   "devDependencies": {
-    "@motiadev/workbench": "^0.17.9-beta.191",
-    "@types/pg": "^8.16.0",
-    "@types/react": "^19.1.1",
-    "concurrently": "^8.2.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.7.3"
+    "turbo": "^2.3.3"
+  },
+  "packageManager": "npm@10.2.0",
+  "engines": {
+    "node": ">=18"
   }
 }

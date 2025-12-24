@@ -20,7 +20,7 @@ export const config: ApiRouteConfig = {
   }
 }
 
-const VALID_SOURCES = ['arbeitnow', 'hackernews', 'reddit', 'remotive', 'all']
+const VALID_SOURCES = ['arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound', 'googlejobs', 'jobicy', 'weworkremotely', 'all']
 
 export const handler: Handlers['RefreshSource'] = async (req, { emit, logger }) => {
   const { name } = req.pathParams

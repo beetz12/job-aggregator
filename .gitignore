@@ -1,15 +1,23 @@
 # Dependencies
 node_modules
+**/node_modules
 python_modules
 .venv
 venv
+
+# Turborepo
+.turbo
 
 # Motia
 .motia
 .mermaid
 
-# Build
+# Build outputs
 dist
+**/dist
+apps/**/.next
+apps/**/out
+packages/**/dist
 
 # Python
 *.pyc
@@ -31,12 +39,12 @@ __pycache__
 .DS_Store
 Thumbs.db
 
-# Next.js (frontend)
-frontend/.next/
-frontend/out/
-
 # Recordings
 recordings
 
-# error logs
+# Error logs
 error_logs.txt
+
+# Lock files in subdirectories (use root only)
+apps/**/package-lock.json
+packages/**/package-lock.json

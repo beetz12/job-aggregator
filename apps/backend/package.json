@@ -1,0 +1,38 @@
+{
+  "name": "@job-aggregator/backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Job Aggregator Backend - Motia Steps",
+  "type": "module",
+  "scripts": {
+    "postinstall": "motia install",
+    "dev": "motia dev -p 4000",
+    "start": "motia start",
+    "build": "motia build",
+    "generate-types": "motia generate-types",
+    "clean": "rm -rf dist .motia .mermaid"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.71.2",
+    "@motiadev/adapter-bullmq-events": "^0.17.9-beta.191",
+    "@motiadev/core": "^0.17.9-beta.191",
+    "@motiadev/plugin-bullmq": "^0.17.9-beta.191",
+    "@motiadev/plugin-endpoint": "^0.17.9-beta.191",
+    "@motiadev/plugin-logs": "^0.17.9-beta.191",
+    "@motiadev/plugin-observability": "^0.17.9-beta.191",
+    "@motiadev/plugin-states": "^0.17.9-beta.191",
+    "@supabase/supabase-js": "^2.88.0",
+    "fast-xml-parser": "^5.3.3",
+    "fuzzball": "^2.2.3",
+    "motia": "^0.17.9-beta.191",
+    "pg": "^8.16.3",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@motiadev/workbench": "^0.17.9-beta.191",
+    "@types/pg": "^8.16.0",
+    "@types/react": "^19.1.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}

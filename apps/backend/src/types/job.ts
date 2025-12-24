@@ -12,7 +12,7 @@ export const jobSchema = z.object({
   remote: z.boolean(),
   url: z.string(),
   description: z.string(),
-  source: z.enum(['arbeitnow', 'hackernews', 'reddit', 'remotive']),
+  source: z.enum(['arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound', 'googlejobs', 'jobicy', 'weworkremotely']),
   postedAt: z.string(),
   fetchedAt: z.string(),
   tags: z.array(z.string()),
