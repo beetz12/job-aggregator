@@ -9,17 +9,21 @@ export const config: CronConfig = {
   flows: ['job-aggregation']
 }
 
+// All 9 sources from the Python Scraper API
+const SOURCES = [
+  'arbeitnow',
+  'hackernews',
+  'remoteok',
+  'weworkremotely',
+  'braintrust',
+  'devitjobs',
+  'jobicy',
+  'github',
+  'wellfound',
+] as const;
+
 export const handler: Handlers['RefreshAllSources'] = async ({ emit, logger }) => {
-  const sources = [
-    'arbeitnow',
-    'remotive',
-    'jobicy',
-    'weworkremotely',
-    'hackernews',
-    'reddit',
-    'wellfound',
-    'googlejobs'
-  ]
+  const sources = SOURCES
 
   logger.info('Scheduled refresh started - triggering sources with staggered delays', {
     sourceCount: sources.length,

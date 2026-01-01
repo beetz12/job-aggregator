@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { ALL_JOB_SOURCES, SOURCE_DISPLAY_NAMES, type JobSource } from '@/lib/types'
 
 interface SearchBarProps {
   onFilterChange: (filters: {
@@ -99,9 +100,11 @@ export default function SearchBar({ onFilterChange, initialSource, initialRemote
             className="w-full bg-gray-700 text-white border border-gray-600 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">All Sources</option>
-            <option value="arbeitnow">Arbeitnow</option>
-            <option value="hackernews">HackerNews</option>
-            <option value="reddit">Reddit</option>
+            {ALL_JOB_SOURCES.map((src) => (
+              <option key={src} value={src}>
+                {SOURCE_DISPLAY_NAMES[src]}
+              </option>
+            ))}
           </select>
         </div>
 

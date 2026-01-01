@@ -22,10 +22,12 @@
     "@motiadev/plugin-observability": "^0.17.9-beta.191",
     "@motiadev/plugin-states": "^0.17.9-beta.191",
     "@supabase/supabase-js": "^2.88.0",
+    "@types/uuid": "^10.0.0",
     "fast-xml-parser": "^5.3.3",
     "fuzzball": "^2.2.3",
     "motia": "^0.17.9-beta.191",
     "pg": "^8.16.3",
+    "uuid": "^11.1.0",
     "zod": "^4.1.12"
   },
   "devDependencies": {

@@ -50,16 +50,23 @@ export default function SourceStatus({ sources, isLoading }: SourceStatusProps) 
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {sources.map((source) => (
           <div
             key={source.name}
-            className="bg-gray-700/50 rounded-lg p-3 flex items-center justify-between"
+            className={`bg-gray-700/50 rounded-lg p-3 flex items-center justify-between ${
+              !source.isActive ? 'opacity-60' : ''
+            }`}
           >
             <div className="flex items-center">
               <div className={`w-2 h-2 rounded-full ${statusColors[source.status]} mr-3`}></div>
               <div>
-                <div className="text-white font-medium capitalize">{source.name}</div>
+                <div className="text-white font-medium flex items-center gap-2">
+                  {source.displayName || source.name}
+                  {!source.isActive && (
+                    <span className="text-xs text-gray-500">(legacy)</span>
+                  )}
+                </div>
                 <div className="text-gray-400 text-xs">
                   {source.jobCount} jobs
                   {source.lastFetch && (
@@ -70,13 +77,15 @@ export default function SourceStatus({ sources, isLoading }: SourceStatusProps) 
                 </div>
               </div>
             </div>
-            <button
-              onClick={() => refreshMutation.mutate(source.name)}
-              disabled={refreshMutation.isPending}
-              className="text-blue-400 hover:text-blue-300 text-xs disabled:text-gray-500"
-            >
-              Refresh
-            </button>
+            {source.isActive && (
+              <button
+                onClick={() => refreshMutation.mutate(source.name)}
+                disabled={refreshMutation.isPending}
+                className="text-blue-400 hover:text-blue-300 text-xs disabled:text-gray-500"
+              >
+                Refresh
+              </button>
+            )}
           </div>
         ))}
       </div>

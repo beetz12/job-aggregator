@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Job, MatchedJob } from '@/lib/types'
+import { Job, MatchedJob, SOURCE_COLORS, SOURCE_DISPLAY_NAMES, type JobSource } from '@/lib/types'
 
 interface JobCardProps {
   job: Job | MatchedJob
@@ -9,13 +9,6 @@ interface JobCardProps {
   onSave?: () => void
   isSaving?: boolean
   showSaveButton?: boolean
-}
-
-const sourceColors: Record<string, string> = {
-  arbeitnow: 'bg-blue-600',
-  hackernews: 'bg-orange-500',
-  reddit: 'bg-red-600',
-  remotive: 'bg-purple-600',
 }
 
 function getMatchScoreColor(score: number): string {
@@ -68,10 +61,10 @@ export default function JobCard({
             )}
             <span
               className={`${
-                sourceColors[job.source] || 'bg-gray-600'
+                SOURCE_COLORS[job.source as JobSource] || 'bg-gray-600'
               } text-xs text-white px-2 py-1 rounded`}
             >
-              {job.source}
+              {SOURCE_DISPLAY_NAMES[job.source as JobSource] || job.source}
             </span>
           </div>
         </div>

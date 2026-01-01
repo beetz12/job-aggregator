@@ -1,5 +1,6 @@
 import type { ApiRouteConfig, Handlers } from 'motia'
 import { z } from 'zod'
+import { ALL_JOB_SOURCES, isValidSource, getActiveSources } from '../services/sources'
 
 const responseSchema = z.object({
   message: z.string(),
@@ -20,12 +21,14 @@ export const config: ApiRouteConfig = {
   }
 }
 
-const VALID_SOURCES = ['arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound', 'googlejobs', 'jobicy', 'weworkremotely', 'all']
+// Valid sources include all job sources plus 'all' for refresh all
+const VALID_SOURCES = [...ALL_JOB_SOURCES, 'all'] as const
 
 export const handler: Handlers['RefreshSource'] = async (req, { emit, logger }) => {
   const { name } = req.pathParams
 
-  if (!VALID_SOURCES.includes(name)) {
+  // Check if source is valid (either 'all' or a known source)
+  if (name !== 'all' && !isValidSource(name)) {
     return {
       status: 400,
       body: { error: `Invalid source: ${name}. Valid sources: ${VALID_SOURCES.join(', ')}` }

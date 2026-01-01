@@ -1,12 +1,23 @@
 import type { EventConfig, Handlers } from 'motia'
 import { z } from 'zod'
-import { calculateHealthScore } from '../services/health-scorer'
+import { v4 as uuidv4 } from 'uuid'
+import { calculateHealthScore, checkCompleteness, type JobSource as HealthJobSource } from '../services/health-scorer'
+import { parseLocation } from '../services/location-parser'
+import { parseSalary } from '../services/salary-parser'
+import { generateContentHash } from '../services/database'
+import { rawJobSchema, type RawJob } from '../services/scraper-client'
 import { parsePostedAt, extractTags, isRemoteJob, type GoogleJobRaw } from '../services/scrapers/googlejobs-scraper'
-import type { Job } from '../types/job'
+import type { Job, JobSourceType } from '../types/job'
 
+// Extended input schema that accepts both old and new formats
 const inputSchema = z.object({
-  source: z.enum(['arbeitnow', 'hackernews', 'reddit', 'remotive', 'googlejobs', 'wellfound', 'jobicy', 'weworkremotely']),
-  rawJob: z.record(z.string(), z.unknown())
+  source: z.enum([
+    'arbeitnow', 'hackernews', 'reddit', 'remotive', 'googlejobs', 'wellfound',
+    'jobicy', 'weworkremotely', 'remoteok', 'braintrust', 'devitjobs', 'github'
+  ]),
+  rawJob: z.record(z.string(), z.unknown()),
+  // New field from fetch-from-scraper.step.ts
+  fetchedAt: z.string().optional()
 })
 
 export const config: EventConfig = {
@@ -20,14 +31,19 @@ export const config: EventConfig = {
 }
 
 export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger }) => {
-  const { source } = input
+  const { source, fetchedAt: inputFetchedAt } = input
   const rawJob = input.rawJob as Record<string, unknown>
   let normalizedJob: Job
 
-  logger.info('Normalizing job', { source, jobId: (rawJob.slug || rawJob.id) as string })
+  const jobIdForLog = (rawJob.source_id || rawJob.slug || rawJob.id) as string
+  logger.info('Normalizing job', { source, jobId: jobIdForLog })
 
   try {
-    if (source === 'arbeitnow') {
+    // Check if this is a new format from the Python Scraper API
+    // New format has source_id field
+    if (rawJob.source_id) {
+      normalizedJob = await normalizeScraperApiJob(rawJob, source, inputFetchedAt, logger)
+    } else if (source === 'arbeitnow') {
       const createdAt = rawJob.created_at as number
       const postedAt = new Date(createdAt * 1000).toISOString()
       normalizedJob = {
@@ -260,4 +276,234 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('Failed to normalize job', { source, error: errorMessage })
   }
+}
+
+// ============================================================================
+// Scraper API Job Normalization (New Format)
+// ============================================================================
+
+/**
+ * Normalizes a job from the Python Scraper API (new format with source_id)
+ */
+async function normalizeScraperApiJob(
+  rawJob: Record<string, unknown>,
+  source: string,
+  fetchedAt: string | undefined,
+  logger: { debug: (msg: string, meta?: Record<string, unknown>) => void }
+): Promise<Job> {
+  const now = new Date().toISOString()
+  const actualFetchedAt = fetchedAt || now
+
+  // Parse location using the location parser
+  const locationRaw = rawJob.location_raw as string | undefined
+  const parsedLocation = parseLocation(locationRaw)
+
+  // Determine remote status (from rawJob or parsed location)
+  const isRemote = rawJob.remote !== undefined
+    ? Boolean(rawJob.remote)
+    : parsedLocation.isRemote
+
+  // Parse salary using the salary parser
+  const salaryParsed = parseSalary(
+    rawJob.salary_raw as string | undefined,
+    rawJob.salary_min as number | undefined,
+    rawJob.salary_max as number | undefined,
+    rawJob.salary_currency as string | undefined
+  )
+
+  // Extract description (prefer text, fallback to HTML stripped)
+  const descriptionText = rawJob.description_text as string | undefined
+  const descriptionHtml = rawJob.description_html as string | undefined
+  const description = descriptionText || stripHtml(descriptionHtml || '')
+
+  // Determine posted date
+  const postedAtRaw = rawJob.posted_at as string | undefined
+  const postedAt = postedAtRaw || actualFetchedAt
+
+  // Get tags from rawJob
+  const tags = (rawJob.tags as string[]) || []
+
+  // Extract skills from description
+  const skills = extractSkills(description, tags)
+
+  // Calculate health score using the new comprehensive scoring
+  const sourceAsHealth = source as HealthJobSource
+  const completeness = checkCompleteness({
+    description,
+    location: locationRaw,
+    salary: salaryParsed,
+    tags: skills
+  })
+  const healthScore = calculateHealthScore(postedAt, sourceAsHealth, completeness)
+
+  // Generate content hash for deduplication
+  const locationForHash = parsedLocation.city || parsedLocation.country || locationRaw || ''
+  const contentHash = generateContentHash(
+    rawJob.title as string,
+    rawJob.company as string,
+    locationForHash
+  )
+
+  // Build location display string
+  const locationDisplay = buildLocationDisplay(parsedLocation, locationRaw)
+
+  // Build normalized job
+  const normalizedJob: Job = {
+    id: uuidv4(),
+    sourceId: rawJob.source_id as string,
+    source: source as JobSourceType,
+
+    title: (rawJob.title as string) || 'Untitled',
+    company: (rawJob.company as string) || 'Unknown Company',
+    companyUrl: rawJob.company_url as string | undefined,
+
+    location: locationDisplay,
+    locationParsed: parsedLocation.city || parsedLocation.country ? {
+      city: parsedLocation.city,
+      state: parsedLocation.state,
+      country: parsedLocation.country,
+      countryCode: parsedLocation.countryCode,
+      raw: parsedLocation.raw
+    } : undefined,
+    remote: isRemote,
+
+    url: (rawJob.url as string) || '',
+    description: description.substring(0, 2000), // Allow longer descriptions
+
+    salary: salaryParsed ? {
+      min: salaryParsed.min,
+      max: salaryParsed.max,
+      currency: salaryParsed.currency,
+      period: salaryParsed.period,
+      normalizedYearly: salaryParsed.normalizedYearly
+    } : undefined,
+
+    employmentType: rawJob.employment_type as string | undefined,
+    experienceLevel: rawJob.experience_level as string | undefined,
+
+    tags,
+    skills,
+
+    postedAt,
+    fetchedAt: actualFetchedAt,
+
+    healthScore,
+    contentHash
+  }
+
+  logger.debug('Normalized scraper API job', {
+    sourceId: normalizedJob.sourceId,
+    title: normalizedJob.title,
+    company: normalizedJob.company,
+    healthScore,
+    hasLocation: !!normalizedJob.location,
+    hasSalary: !!normalizedJob.salary
+  })
+
+  return normalizedJob
+}
+
+// ============================================================================
+// Helper Functions
+// ============================================================================
+
+/**
+ * Strip HTML tags from a string
+ */
+function stripHtml(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+/**
+ * Extract tech skills from job description and tags
+ */
+function extractSkills(description: string, tags: string[]): string[] {
+  const skills = new Set<string>(tags.map(t => t.toLowerCase()))
+
+  // Common tech skills to detect
+  const skillPatterns = [
+    // Languages
+    'javascript', 'typescript', 'python', 'java', 'go', 'golang', 'rust', 'ruby',
+    'c++', 'c#', 'csharp', 'php', 'scala', 'kotlin', 'swift', 'objective-c',
+    // Frontend
+    'react', 'vue', 'angular', 'svelte', 'next.js', 'nextjs', 'nuxt', 'gatsby',
+    'html', 'css', 'sass', 'tailwind', 'bootstrap', 'webpack', 'vite',
+    // Backend
+    'node', 'nodejs', 'express', 'fastify', 'django', 'flask', 'rails', 'spring',
+    'fastapi', 'nest.js', 'nestjs', 'laravel', 'gin',
+    // Cloud & DevOps
+    'aws', 'gcp', 'azure', 'docker', 'kubernetes', 'k8s', 'terraform', 'ansible',
+    'jenkins', 'github actions', 'gitlab', 'circleci', 'argocd', 'helm',
+    // Databases
+    'postgresql', 'postgres', 'mysql', 'mongodb', 'redis', 'elasticsearch',
+    'dynamodb', 'cassandra', 'neo4j', 'sqlite', 'mariadb',
+    // Data & ML
+    'machine learning', 'ml', 'deep learning', 'tensorflow', 'pytorch', 'scikit-learn',
+    'pandas', 'numpy', 'spark', 'kafka', 'airflow', 'dbt', 'snowflake',
+    // APIs & Protocols
+    'graphql', 'rest', 'restful', 'grpc', 'websocket', 'openapi', 'swagger',
+    // Other
+    'git', 'linux', 'agile', 'scrum', 'ci/cd', 'microservices', 'serverless'
+  ]
+
+  const lowerDesc = description.toLowerCase()
+
+  for (const skill of skillPatterns) {
+    // Use word boundaries to avoid partial matches
+    const pattern = new RegExp(`\\b${skill.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')
+    if (pattern.test(lowerDesc)) {
+      skills.add(skill)
+    }
+  }
+
+  return Array.from(skills).slice(0, 20) // Limit to 20 skills
+}
+
+/**
+ * Build a display-friendly location string from parsed location
+ */
+function buildLocationDisplay(
+  parsed: ReturnType<typeof parseLocation>,
+  raw: string | undefined
+): string | undefined {
+  if (!raw && !parsed.city && !parsed.country) {
+    return undefined
+  }
+
+  const parts: string[] = []
+
+  if (parsed.city) {
+    parts.push(parsed.city)
+  }
+
+  if (parsed.state) {
+    parts.push(parsed.state)
+  }
+
+  if (parsed.country) {
+    parts.push(parsed.country)
+  }
+
+  if (parts.length === 0) {
+    return raw
+  }
+
+  // Add remote indicator if applicable
+  if (parsed.isRemote && parts.length > 0) {
+    const remoteLabel = parsed.remoteType === 'hybrid' ? ' (Hybrid)'
+      : parsed.remoteType === 'flexible' ? ' (Flexible Remote)'
+        : ' (Remote)'
+    return parts.join(', ') + remoteLabel
+  }
+
+  return parts.join(', ')
 }

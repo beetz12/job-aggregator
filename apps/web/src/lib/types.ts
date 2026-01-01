@@ -1,3 +1,66 @@
+// All supported job sources - must match backend sources.ts
+export type JobSource =
+  | 'arbeitnow'
+  | 'hackernews'
+  | 'reddit'
+  | 'remotive'
+  | 'wellfound'
+  | 'googlejobs'
+  | 'jobicy'
+  | 'weworkremotely'
+  | 'remoteok'
+  | 'braintrust'
+  | 'devitjobs'
+  | 'github'
+
+// All sources as array for iteration
+export const ALL_JOB_SOURCES: JobSource[] = [
+  'arbeitnow',
+  'hackernews',
+  'reddit',
+  'remotive',
+  'wellfound',
+  'googlejobs',
+  'jobicy',
+  'weworkremotely',
+  'remoteok',
+  'braintrust',
+  'devitjobs',
+  'github'
+]
+
+// Source display names
+export const SOURCE_DISPLAY_NAMES: Record<JobSource, string> = {
+  arbeitnow: 'Arbeitnow',
+  hackernews: 'Hacker News',
+  reddit: 'Reddit',
+  remotive: 'Remotive',
+  wellfound: 'Wellfound',
+  googlejobs: 'Google Jobs',
+  jobicy: 'Jobicy',
+  weworkremotely: 'We Work Remotely',
+  remoteok: 'RemoteOK',
+  braintrust: 'Braintrust',
+  devitjobs: 'DevITJobs',
+  github: 'GitHub Jobs'
+}
+
+// Source colors for UI
+export const SOURCE_COLORS: Record<JobSource, string> = {
+  arbeitnow: 'bg-green-600',
+  hackernews: 'bg-orange-500',
+  reddit: 'bg-red-600',
+  remotive: 'bg-indigo-600',
+  wellfound: 'bg-gray-900',
+  googlejobs: 'bg-blue-500',
+  jobicy: 'bg-blue-600',
+  weworkremotely: 'bg-emerald-600',
+  remoteok: 'bg-red-500',
+  braintrust: 'bg-purple-600',
+  devitjobs: 'bg-pink-500',
+  github: 'bg-gray-800'
+}
+
 export interface Job {
   id: string
   title: string
@@ -6,11 +69,33 @@ export interface Job {
   remote: boolean
   url: string
   description: string
-  source: 'arbeitnow' | 'hackernews' | 'reddit' | 'remotive'
+  source: JobSource
   postedAt: string
   fetchedAt: string
   tags: string[]
   healthScore: number
+
+  // Extended fields from Python scraper integration
+  sourceId?: string
+  companyUrl?: string
+  locationParsed?: {
+    city?: string
+    state?: string
+    country?: string
+    countryCode?: string
+  }
+  salary?: {
+    min?: number
+    max?: number
+    currency: string
+    period: string
+    normalizedYearly?: {
+      min?: number
+      max?: number
+    }
+  }
+  employmentType?: 'full-time' | 'part-time' | 'contract' | 'internship'
+  experienceLevel?: 'entry' | 'mid' | 'senior' | 'lead' | 'executive'
 }
 
 export interface JobsResponse {
@@ -22,10 +107,13 @@ export interface JobsResponse {
 
 export interface Source {
   name: string
+  displayName: string
   lastFetch: string | null
   jobCount: number
   status: 'success' | 'error' | 'pending' | 'unknown'
   error?: string
+  isActive: boolean
+  color: string
 }
 
 export interface SourcesResponse {

@@ -22,7 +22,19 @@ CREATE TABLE IF NOT EXISTS jobs (
   remote BOOLEAN DEFAULT FALSE,
   url TEXT NOT NULL,
   description TEXT,
-  source TEXT NOT NULL CHECK (source IN ('arbeitnow', 'hackernews', 'reddit', 'remotive')),
+  source TEXT NOT NULL CHECK (source IN (
+    'arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound',
+    'googlejobs', 'jobicy', 'weworkremotely', 'remoteok',
+    'braintrust', 'devitjobs', 'github'
+  )),
+
+  -- Extended fields from Python scraper integration
+  source_id TEXT,                    -- Original ID from source
+  company_url TEXT,                  -- Company website URL
+  location_parsed JSONB,             -- Parsed location {city, state, country, countryCode}
+  salary JSONB,                      -- Salary info {min, max, currency, period, normalizedYearly}
+  employment_type TEXT CHECK (employment_type IN ('full-time', 'part-time', 'contract', 'internship')),
+  experience_level TEXT CHECK (experience_level IN ('entry', 'mid', 'senior', 'lead', 'executive')),
   posted_at TIMESTAMPTZ,
   fetched_at TIMESTAMPTZ DEFAULT NOW(),
   tags TEXT[] DEFAULT '{}',
@@ -58,6 +70,12 @@ CREATE INDEX IF NOT EXISTS idx_jobs_search ON jobs USING GIN (
   to_tsvector('english', coalesce(title, '') || ' ' || coalesce(company, '') || ' ' || coalesce(description, ''))
 );
 
+-- Indexes for extended fields
+CREATE INDEX IF NOT EXISTS idx_jobs_source_id ON jobs(source_id);
+CREATE INDEX IF NOT EXISTS idx_jobs_employment_type ON jobs(employment_type);
+CREATE INDEX IF NOT EXISTS idx_jobs_experience_level ON jobs(experience_level);
+CREATE INDEX IF NOT EXISTS idx_jobs_location_parsed ON jobs USING GIN (location_parsed);
+
 -- Trigram indexes for fuzzy matching
 CREATE INDEX IF NOT EXISTS idx_jobs_title_trgm ON jobs USING GIN (title_normalized gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_jobs_company_trgm ON jobs USING GIN (company_normalized gin_trgm_ops);
@@ -67,7 +85,11 @@ CREATE INDEX IF NOT EXISTS idx_jobs_company_trgm ON jobs USING GIN (company_norm
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS sources (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT UNIQUE NOT NULL CHECK (name IN ('arbeitnow', 'hackernews', 'reddit', 'remotive')),
+  name TEXT UNIQUE NOT NULL CHECK (name IN (
+    'arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound',
+    'googlejobs', 'jobicy', 'weworkremotely', 'remoteok',
+    'braintrust', 'devitjobs', 'github'
+  )),
   status TEXT DEFAULT 'unknown' CHECK (status IN ('success', 'error', 'pending', 'unknown')),
   last_fetch TIMESTAMPTZ,
   job_count INTEGER DEFAULT 0,
@@ -81,7 +103,15 @@ INSERT INTO sources (name, status) VALUES
   ('arbeitnow', 'unknown'),
   ('hackernews', 'unknown'),
   ('reddit', 'unknown'),
-  ('remotive', 'unknown')
+  ('remotive', 'unknown'),
+  ('wellfound', 'unknown'),
+  ('googlejobs', 'unknown'),
+  ('jobicy', 'unknown'),
+  ('weworkremotely', 'unknown'),
+  ('remoteok', 'unknown'),
+  ('braintrust', 'unknown'),
+  ('devitjobs', 'unknown'),
+  ('github', 'unknown')
 ON CONFLICT (name) DO NOTHING;
 
 -- =============================================================================
