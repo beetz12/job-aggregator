@@ -31,7 +31,8 @@ const inputSchema = z.object({
     'all'
   ] as [string, ...string[]]),
   params: z.record(z.string(), z.string()).optional(),
-  limit: z.number().optional().default(100)
+  limit: z.number().optional().default(100),
+  manual: z.boolean().optional().default(false)
 })
 
 // ============================================================================
@@ -64,7 +65,7 @@ const STAGGER_DELAY_MS = 5000
 // ============================================================================
 
 export const handler: Handlers['FetchFromScraper'] = async (input, { emit, logger, state }) => {
-  const { source, params, limit } = input
+  const { source, params, limit, manual } = input
 
   // Handle "all" by emitting individual triggers with staggered delays
   if (source === 'all') {
@@ -78,7 +79,8 @@ export const handler: Handlers['FetchFromScraper'] = async (input, { emit, logge
         data: {
           source: individualSource,
           params,
-          limit
+          limit,
+          manual
         }
       })
 

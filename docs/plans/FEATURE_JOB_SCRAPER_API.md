@@ -89,10 +89,10 @@ You are building the **data extraction layer**. Your API:
 │  │  │ Remotely    │ │ (Playwright)│ │ (Playwright)│ │ (Playwright)│    │   │
 │  │  │ (Playwright)│ │             │ │             │ │             │    │   │
 │  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘    │   │
-│  │  ┌─────────────┐                                                     │   │
-│  │  │ GitHub Jobs │                                                     │   │
-│  │  │ (Playwright)│                                                     │   │
-│  │  └─────────────┘                                                     │   │
+│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐                    │   │
+│  │  │ Dice        │ │ Built In    │ │ Remotive    │                    │   │
+│  │  │ (Playwright)│ │ (Playwright)│ │ (Playwright)│                    │   │
+│  │  └─────────────┘ └─────────────┘ └─────────────┘                    │   │
 │  └──────────────────────────────────────────────────────────────────────┘   │
 │                                      │                                       │
 │                                      ▼                                       │
@@ -157,7 +157,9 @@ apps/api/
         │   ├── braintrust.py         # HubSpot pages
         │   ├── devitjobs.py          # Server-rendered React
         │   ├── jobicy.py             # React SPA
-        │   └── github_jobs.py        # React SPA
+        │   ├── dice.py               # IT/Developer focused
+        │   ├── builtin.py            # Tech/Startup culture
+        │   └── remotive.py           # Remote tech jobs
         └── firecrawl/
             ├── __init__.py
             └── wellfound.py          # Firecrawl extraction
@@ -302,7 +304,9 @@ class JobSource(str, Enum):
     DEVITJOBS = "devitjobs"
     WELLFOUND = "wellfound"
     JOBICY = "jobicy"
-    GITHUB = "github"
+    DICE = "dice"           # Replacement for GitHub Jobs
+    BUILTIN = "builtin"     # Tech/startup culture focused
+    REMOTIVE = "remotive"   # Remote tech jobs
 
 class RawJob(BaseModel):
     """
@@ -382,7 +386,9 @@ class ScrapeResponse(BaseModel):
 | 2.2 | Braintrust | Playwright | ⭐⭐ Low-Med | 4 hrs |
 | 2.3 | DevITjobs | Playwright | ⭐⭐ Low-Med | 4 hrs |
 | 2.4 | Jobicy | Playwright | ⭐⭐⭐ Medium | 4 hrs |
-| 2.5 | GitHub Jobs | Playwright | ⭐⭐⭐ Medium | 4 hrs |
+| 2.5 | Dice | Playwright | ⭐⭐ Low-Med | 3 hrs |
+| 2.6 | Built In | Playwright | ⭐⭐⭐ Medium | 4 hrs |
+| 2.7 | Remotive | Playwright | ⭐⭐⭐ Medium | 3 hrs |
 | 3 | Wellfound | Firecrawl | ⭐⭐⭐⭐ High | 5 hrs |
 | 4.1 | Arbeitnow | API | ⭐ Easy | 2 hrs |
 | 4.2 | HackerNews | API | ⭐⭐ Low | 3 hrs |
@@ -840,7 +846,9 @@ from .playwright.weworkremotely import WeWorkRemotelyScraper
 from .playwright.braintrust import BraintrustScraper
 from .playwright.devitjobs import DevITjobsScraper
 from .playwright.jobicy import JobicyScraper
-from .playwright.github_jobs import GitHubJobsScraper
+from .playwright.dice import DiceScraper
+from .playwright.builtin import BuiltInScraper
+from .playwright.remotive import RemotiveScraper
 from .firecrawl.wellfound import WellfoundScraper
 
 # Registry of all available scrapers
@@ -852,7 +860,9 @@ SCRAPER_REGISTRY: Dict[JobSource, Type[BaseJobScraper]] = {
     JobSource.BRAINTRUST: BraintrustScraper,
     JobSource.DEVITJOBS: DevITjobsScraper,
     JobSource.JOBICY: JobicyScraper,
-    JobSource.GITHUB: GitHubJobsScraper,
+    JobSource.DICE: DiceScraper,
+    JobSource.BUILTIN: BuiltInScraper,
+    JobSource.REMOTIVE: RemotiveScraper,
     JobSource.WELLFOUND: WellfoundScraper,
 }
 

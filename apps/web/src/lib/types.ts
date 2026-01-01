@@ -11,7 +11,8 @@ export type JobSource =
   | 'remoteok'
   | 'braintrust'
   | 'devitjobs'
-  | 'github'
+  | 'dice'
+  | 'builtin'
 
 // All sources as array for iteration
 export const ALL_JOB_SOURCES: JobSource[] = [
@@ -26,7 +27,8 @@ export const ALL_JOB_SOURCES: JobSource[] = [
   'remoteok',
   'braintrust',
   'devitjobs',
-  'github'
+  'dice',
+  'builtin'
 ]
 
 // Source display names
@@ -42,7 +44,8 @@ export const SOURCE_DISPLAY_NAMES: Record<JobSource, string> = {
   remoteok: 'RemoteOK',
   braintrust: 'Braintrust',
   devitjobs: 'DevITJobs',
-  github: 'GitHub Jobs'
+  dice: 'Dice',
+  builtin: 'Built In'
 }
 
 // Source colors for UI
@@ -58,44 +61,46 @@ export const SOURCE_COLORS: Record<JobSource, string> = {
   remoteok: 'bg-red-500',
   braintrust: 'bg-purple-600',
   devitjobs: 'bg-pink-500',
-  github: 'bg-gray-800'
+  dice: 'bg-sky-600',
+  builtin: 'bg-orange-600'
 }
 
 export interface Job {
   id: string
+  sourceId?: string
   title: string
   company: string
-  location?: string
-  remote: boolean
-  url: string
-  description: string
-  source: JobSource
-  postedAt: string
-  fetchedAt: string
-  tags: string[]
-  healthScore: number
-
-  // Extended fields from Python scraper integration
-  sourceId?: string
   companyUrl?: string
+  location?: string
   locationParsed?: {
+    raw: string
     city?: string
     state?: string
     country?: string
     countryCode?: string
+    isRemote: boolean
+    remoteType?: 'full' | 'hybrid' | 'flexible'
   }
+  remote: boolean
+  url: string
+  description: string
+  source: JobSource
   salary?: {
     min?: number
     max?: number
     currency: string
-    period: string
-    normalizedYearly?: {
-      min?: number
-      max?: number
-    }
+    period: 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly'
+    normalizedYearly?: { min?: number; max?: number }
   }
   employmentType?: 'full-time' | 'part-time' | 'contract' | 'internship'
   experienceLevel?: 'entry' | 'mid' | 'senior' | 'lead' | 'executive'
+  postedAt: string
+  fetchedAt: string
+  tags: string[]
+  skills?: string[]
+  healthScore: number
+  contentHash?: string
+  aiSummary?: string
 }
 
 export interface JobsResponse {

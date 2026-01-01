@@ -7,13 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import { useJob } from '@/hooks/useJobs'
 import { useMyProfile, useGenerateCoverLetter } from '@/hooks/useProfile'
 import { useCreateApplication } from '@/hooks/useApplications'
-
-const sourceColors: Record<string, string> = {
-  arbeitnow: 'bg-blue-600',
-  hackernews: 'bg-orange-500',
-  reddit: 'bg-red-600',
-  remotive: 'bg-purple-600',
-}
+import { SOURCE_COLORS } from '@/lib/types'
 
 export default function JobDetailsPage() {
   const params = useParams()
@@ -194,7 +188,7 @@ export default function JobDetailsPage() {
               </div>
               <span
                 className={`${
-                  sourceColors[job.source] || 'bg-gray-600'
+                  SOURCE_COLORS[job.source] || 'bg-gray-600'
                 } text-sm text-white px-3 py-1.5 rounded flex-shrink-0 ml-4`}
               >
                 {job.source}

@@ -22,7 +22,9 @@ export const SCRAPER_SOURCES = [
   'braintrust',
   'devitjobs',
   'jobicy',
-  'github',
+  'dice',
+  'builtin',
+  'remotive',
   'wellfound'
 ] as const
 
@@ -31,7 +33,6 @@ export const SCRAPER_SOURCES = [
  */
 export const LEGACY_SOURCES = [
   'reddit',
-  'remotive',
   'googlejobs'
 ] as const
 
@@ -62,7 +63,8 @@ export const jobSourceEnum = z.enum([
   'remoteok',
   'braintrust',
   'devitjobs',
-  'github'
+  'dice',
+  'builtin'
 ])
 
 export type JobSource = z.infer<typeof jobSourceEnum>
@@ -78,7 +80,9 @@ export const scraperSourceEnum = z.enum([
   'braintrust',
   'devitjobs',
   'jobicy',
-  'github',
+  'dice',
+  'builtin',
+  'remotive',
   'wellfound'
 ])
 
@@ -128,10 +132,10 @@ export const SOURCE_INFO: Record<JobSource, SourceInfo> = {
   remotive: {
     name: 'remotive',
     displayName: 'Remotive',
-    type: 'legacy',
+    type: 'scraper',
     color: '#6366F1',
     reliabilityScore: 85,
-    isActive: false
+    isActive: true
   },
   wellfound: {
     name: 'wellfound',
@@ -189,12 +193,20 @@ export const SOURCE_INFO: Record<JobSource, SourceInfo> = {
     reliabilityScore: 80,
     isActive: true
   },
-  github: {
-    name: 'github',
-    displayName: 'GitHub Jobs',
+  dice: {
+    name: 'dice',
+    displayName: 'Dice',
     type: 'scraper',
-    color: '#171515',
-    reliabilityScore: 92,
+    color: '#CC0000',
+    reliabilityScore: 90,
+    isActive: true
+  },
+  builtin: {
+    name: 'builtin',
+    displayName: 'Built In',
+    type: 'scraper',
+    color: '#0066CC',
+    reliabilityScore: 88,
     isActive: true
   }
 }

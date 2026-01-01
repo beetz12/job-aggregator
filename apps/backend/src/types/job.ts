@@ -28,7 +28,9 @@ export const parsedLocationSchema = z.object({
   country: z.string().optional(),
   countryCode: z.string().optional(),
   region: z.string().optional(),
-  raw: z.string().optional()
+  raw: z.string().optional(),
+  isRemote: z.boolean().optional(),
+  remoteType: z.enum(['full', 'hybrid', 'flexible']).optional()
 })
 
 export type ParsedLocation = z.infer<typeof parsedLocationSchema>

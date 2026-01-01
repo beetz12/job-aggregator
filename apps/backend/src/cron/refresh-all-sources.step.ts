@@ -9,7 +9,7 @@ export const config: CronConfig = {
   flows: ['job-aggregation']
 }
 
-// All 9 sources from the Python Scraper API
+// All 11 sources from the Python Scraper API
 const SOURCES = [
   'arbeitnow',
   'hackernews',
@@ -18,7 +18,9 @@ const SOURCES = [
   'braintrust',
   'devitjobs',
   'jobicy',
-  'github',
+  'dice',
+  'builtin',
+  'remotive',
   'wellfound',
 ] as const;
 
@@ -35,7 +37,7 @@ export const handler: Handlers['RefreshAllSources'] = async ({ emit, logger }) =
 
     await emit({
       topic: 'fetch-jobs-trigger',
-      data: { source, manual: false }
+      data: { source, manual: false, limit: 100 }
     })
 
     // Add 5 second delay between sources (except after last one)

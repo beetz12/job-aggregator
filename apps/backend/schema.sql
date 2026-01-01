@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS jobs (
   source TEXT NOT NULL CHECK (source IN (
     'arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound',
     'googlejobs', 'jobicy', 'weworkremotely', 'remoteok',
-    'braintrust', 'devitjobs', 'github'
+    'braintrust', 'devitjobs', 'dice', 'builtin'
   )),
 
   -- Extended fields from Python scraper integration
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS sources (
   name TEXT UNIQUE NOT NULL CHECK (name IN (
     'arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound',
     'googlejobs', 'jobicy', 'weworkremotely', 'remoteok',
-    'braintrust', 'devitjobs', 'github'
+    'braintrust', 'devitjobs', 'dice', 'builtin'
   )),
   status TEXT DEFAULT 'unknown' CHECK (status IN ('success', 'error', 'pending', 'unknown')),
   last_fetch TIMESTAMPTZ,
@@ -111,7 +111,8 @@ INSERT INTO sources (name, status) VALUES
   ('remoteok', 'unknown'),
   ('braintrust', 'unknown'),
   ('devitjobs', 'unknown'),
-  ('github', 'unknown')
+  ('dice', 'unknown'),
+  ('builtin', 'unknown')
 ON CONFLICT (name) DO NOTHING;
 
 -- =============================================================================

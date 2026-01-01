@@ -330,7 +330,9 @@ export type JobSource =
   | 'braintrust'
   | 'devitjobs'
   | 'jobicy'
-  | 'github'
+  | 'dice'       // Replacement for GitHub Jobs (discontinued 2022)
+  | 'builtin'    // Tech/startup culture focused
+  | 'remotive'   // Remote tech jobs
   | 'wellfound';
 
 export interface ScrapeRequest {
@@ -825,7 +827,7 @@ import { updateSourceStatus } from '../services/database';
 const inputSchema = z.object({
   source: z.enum([
     'arbeitnow', 'hackernews', 'remoteok', 'weworkremotely',
-    'braintrust', 'devitjobs', 'jobicy', 'github', 'wellfound', 'all'
+    'braintrust', 'devitjobs', 'jobicy', 'dice', 'builtin', 'remotive', 'wellfound', 'all'
   ]),
   params: z.record(z.string()).optional(),
   limit: z.number().optional().default(100),
@@ -843,7 +845,7 @@ export const config: EventConfig = {
 
 const ALL_SOURCES: JobSource[] = [
   'arbeitnow', 'hackernews', 'remoteok', 'weworkremotely',
-  'braintrust', 'devitjobs', 'jobicy', 'github', 'wellfound',
+  'braintrust', 'devitjobs', 'jobicy', 'dice', 'builtin', 'remotive', 'wellfound',
 ];
 
 const BATCH_SIZE = 10;
@@ -1131,6 +1133,7 @@ export const config: CronConfig = {
 };
 
 // All sources from the Python Scraper API
+// Note: GitHub Jobs was discontinued in 2022, replaced with Dice, Built In, Remotive
 const SOURCES = [
   'arbeitnow',
   'hackernews',
@@ -1139,7 +1142,9 @@ const SOURCES = [
   'braintrust',
   'devitjobs',
   'jobicy',
-  'github',
+  'dice',      // IT/developer focus (replacement for GitHub Jobs)
+  'builtin',   // Tech/startup culture
+  'remotive',  // Remote tech jobs
   'wellfound',
 ] as const;
 
@@ -1180,6 +1185,7 @@ export const handler: Handlers['RefreshAllSources'] = async ({ emit, logger }) =
 import { type JobSource } from '../types/job';
 
 // Source reliability weights (out of 20 points)
+// Note: GitHub Jobs discontinued in 2022, replaced with Dice, Built In, Remotive
 const SOURCE_RELIABILITY: Record<JobSource, number> = {
   arbeitnow: 18,       // Direct API, high reliability
   hackernews: 15,      // Community-driven, good quality
@@ -1188,7 +1194,9 @@ const SOURCE_RELIABILITY: Record<JobSource, number> = {
   braintrust: 16,      // Curated, good quality
   devitjobs: 15,       // Regional focus, good quality
   jobicy: 14,          // Mixed quality
-  github: 13,          // Variable, some outdated
+  dice: 17,            // IT/developer focus, direct GitHub Jobs replacement
+  builtin: 18,         // Curated tech/startup jobs, high quality
+  remotive: 16,        // Remote-focused, hand-vetted
   wellfound: 17,       // Startup-focused, high quality
 };
 

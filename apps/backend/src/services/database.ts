@@ -53,6 +53,13 @@ function mapDbRowToJob(row: Record<string, unknown>): Job {
     healthScore: row.health_score as number,
     aiSummary: row.ai_summary as string | undefined,
     skills: (row.skills as string[]) || [],
+    sourceId: row.source_id as string | undefined,
+    companyUrl: row.company_url as string | undefined,
+    locationParsed: row.location_parsed as Job['locationParsed'],
+    salary: row.salary as Job['salary'],
+    employmentType: row.employment_type as string | undefined,
+    experienceLevel: row.experience_level as string | undefined,
+    contentHash: row.content_hash as string | undefined,
   }
 }
 
@@ -103,8 +110,9 @@ export async function upsertJob(job: Job): Promise<{
       `INSERT INTO jobs (
         id, title, company, location, remote, url, description, source,
         posted_at, fetched_at, tags, health_score, content_hash,
-        title_normalized, company_normalized, ai_summary, skills
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+        title_normalized, company_normalized, ai_summary, skills,
+        source_id, company_url, location_parsed, salary, employment_type, experience_level
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
       RETURNING *`,
       [
         job.id,
@@ -123,7 +131,13 @@ export async function upsertJob(job: Job): Promise<{
         normalizeText(job.title),
         normalizeText(job.company),
         job.aiSummary || null,
-        job.skills || []
+        job.skills || [],
+        job.sourceId || null,
+        job.companyUrl || null,
+        job.locationParsed ? JSON.stringify(job.locationParsed) : null,
+        job.salary ? JSON.stringify(job.salary) : null,
+        job.employmentType || null,
+        job.experienceLevel || null
       ]
     )
 

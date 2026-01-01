@@ -4,8 +4,11 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { Stream, StreamGroupSubscription } from '@motiadev/stream-client-browser'
 import { Job } from '@/lib/types'
 
+// Configured API URL from environment
+const CONFIGURED_API_URL = process.env.NEXT_PUBLIC_API_URL
+
 // Ports to try for auto-discovery (Motia default + fallbacks)
-const BACKEND_PORTS = [8000, 8001, 8002, 8003]
+const BACKEND_PORTS = [4000, 8000, 8001, 8002, 8003]
 
 interface UseJobStreamOptions {
   /**
@@ -55,6 +58,35 @@ export function useJobStream(options: UseJobStreamOptions = {}): UseJobStreamRes
   const maxReconnectAttempts = 5
 
   const discoverStreamUrl = useCallback(async (): Promise<string | null> => {
+    // Use configured URL first
+    if (CONFIGURED_API_URL) {
+      try {
+        const url = new URL(CONFIGURED_API_URL)
+        const protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
+        const wsUrl = `${protocol}//${url.host}`
+
+        // Verify it's accessible
+        const testUrl = `${CONFIGURED_API_URL}/health`
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 2000)
+
+        const response = await fetch(testUrl, {
+          method: 'GET',
+          cache: 'no-store',
+          signal: controller.signal,
+        })
+
+        clearTimeout(timeoutId)
+
+        if (response.ok) {
+          return wsUrl
+        }
+      } catch (e) {
+        console.warn('Configured API URL not accessible, falling back to discovery')
+      }
+    }
+
+    // Fall back to port discovery
     for (const port of BACKEND_PORTS) {
       const url = `http://localhost:${port}`
       try {

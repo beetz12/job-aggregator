@@ -1,6 +1,5 @@
 import type { EventConfig, Handlers } from 'motia'
 import { z } from 'zod'
-import { v4 as uuidv4 } from 'uuid'
 import { calculateHealthScore, checkCompleteness, type JobSource as HealthJobSource } from '../services/health-scorer'
 import { parseLocation } from '../services/location-parser'
 import { parseSalary } from '../services/salary-parser'
@@ -13,7 +12,7 @@ import type { Job, JobSourceType } from '../types/job'
 const inputSchema = z.object({
   source: z.enum([
     'arbeitnow', 'hackernews', 'reddit', 'remotive', 'googlejobs', 'wellfound',
-    'jobicy', 'weworkremotely', 'remoteok', 'braintrust', 'devitjobs', 'github'
+    'jobicy', 'weworkremotely', 'remoteok', 'braintrust', 'devitjobs', 'dice', 'builtin'
   ]),
   rawJob: z.record(z.string(), z.unknown()),
   // New field from fetch-from-scraper.step.ts
@@ -349,7 +348,7 @@ async function normalizeScraperApiJob(
 
   // Build normalized job
   const normalizedJob: Job = {
-    id: uuidv4(),
+    id: `${source}_${rawJob.source_id as string}`,
     sourceId: rawJob.source_id as string,
     source: source as JobSourceType,
 

@@ -345,44 +345,16 @@ def scrape_wellfound_firecrawl(keyword: str, location: str):
 
 ***
 
-### **2. GitHub Jobs** ⭐⭐⭐ FIRECRAWL OPTIONAL
+### **2. GitHub Jobs** ⚠️ DISCONTINUED (2022)
 
-**Why complex:**
-- React SPA with client-side routing
-- AJAX pagination
-- Job data loaded via JavaScript
+**Important:** GitHub Jobs was discontinued in early 2022. The job board is no longer active.
 
-**Playwright approach (works but fragile):**
-```python
-async def scrape_github_jobs_playwright(keyword: str):
-    """Possible but requires waiting for JS"""
-    
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
-        
-        url = f'https://github.com/jobs?description={keyword}'
-        await page.goto(url, wait_until='networkidle')  # Wait for AJAX
-        
-        # Now DOM is ready
-        jobs = await page.query_selector_all('.job-item')
-        
-        # ... parse jobs ...
-```
+**Replacements:** See [github_jobs_replacement.md](./github_jobs_replacement.md) for details on:
+- **Dice** - Direct replacement, IT/developer focus
+- **Built In** - Tech/startup culture, curated high-quality jobs
+- **Remotive** - Remote tech jobs, hand-vetted
 
-**Firecrawl approach (simpler):**
-```python
-app = FirecrawlApp(api_key='YOUR_KEY')
-
-result = app.scrape_url(
-    'https://github.com/jobs?description=React',
-    {'formats': ['json']}
-)
-```
-
-**Recommendation:** Use **Playwright + wait_until='networkidle'** (cheaper, works 90% of time)
-
-**Cost:** $0 (Playwright only)
+**Skip this platform entirely.**
 
 ***
 
@@ -452,7 +424,9 @@ async def scrape_jobicy(keyword: str):
 | **We Work Remotely** | Playwright | $5-10 | 95% | ⭐⭐⭐⭐ |
 | **RemoteOK** | RSS Feed | $0 | 90% | ⭐⭐⭐ |
 | **Jobicy** | Playwright + Bright Data | $15-20 | 85% | ⭐⭐⭐⭐ |
-| **GitHub Jobs** | Playwright + wait_until='networkidle' | $5-10 | 85% | ⭐⭐⭐ |
+| **Dice** | Playwright | $5-10 | 95% | ⭐⭐⭐⭐⭐ |
+| **Built In** | Playwright | $5-15 | 90% | ⭐⭐⭐⭐⭐ |
+| **Remotive** | Playwright | $0-5 | 95% | ⭐⭐⭐⭐⭐ |
 | **Wellfound** | **Firecrawl** | $15 | 98% | ⭐⭐⭐⭐⭐ |
 
 ***
@@ -469,7 +443,9 @@ async def scrape_jobicy(keyword: str):
 
 # Low Cost (Playwright + Proxy):
 - Jobicy (Playwright + Bright Data): $15-20
-- GitHub (Playwright): $0
+- Dice (Playwright): $5-10        # GitHub Jobs replacement
+- Built In (Playwright): $5-15    # High quality tech/startup
+- Remotive (Playwright): $0-5     # Remote tech jobs
 
 # Worth the cost (Firecrawl):
 - Wellfound (Firecrawl): $15        # ⭐⭐⭐⭐⭐ startup ecosystem
@@ -498,6 +474,9 @@ OUTPUT: 25,000+ jobs/month (increased with Braintrust + DevITjobs)
 | 3 | **DevITjobs** | Transparent salaries, US+UK markets | $0 |
 | 4 | **HackerNews** | Tech community, authentic postings | $0 |
 | 5 | **We Work Remotely** | Remote-first, simple to scrape | $0 |
+| 6 | **Dice** | IT/developer focus, GitHub Jobs replacement | $5-10 |
+| 7 | **Built In** | Curated tech/startup, high quality | $5-15 |
+| 8 | **Remotive** | Remote tech, hand-vetted | $0-5 |
 
 **Firecrawl ROI:** $15/month buys you access to Wellfound's 1,000 high-quality startup jobs/month (worth more than 10K average job board jobs). Worth the cost.
 

@@ -1,6 +1,6 @@
 import type { ApiRouteConfig, Handlers } from 'motia'
 import { z } from 'zod'
-import { ALL_JOB_SOURCES, isValidSource, getActiveSources } from '../services/sources'
+import { SCRAPER_SOURCES } from '../services/sources'
 
 const responseSchema = z.object({
   message: z.string(),
@@ -21,14 +21,15 @@ export const config: ApiRouteConfig = {
   }
 }
 
-// Valid sources include all job sources plus 'all' for refresh all
-const VALID_SOURCES = [...ALL_JOB_SOURCES, 'all'] as const
+// Valid sources include all scraper sources plus 'all' for refresh all
+const VALID_SOURCES = [...SCRAPER_SOURCES, 'all'] as const
 
 export const handler: Handlers['RefreshSource'] = async (req, { emit, logger }) => {
   const { name } = req.pathParams
 
-  // Check if source is valid (either 'all' or a known source)
-  if (name !== 'all' && !isValidSource(name)) {
+  // Check if source is valid (either 'all' or a known scraper source)
+  const isValidScraperSource = SCRAPER_SOURCES.includes(name as typeof SCRAPER_SOURCES[number])
+  if (name !== 'all' && !isValidScraperSource) {
     return {
       status: 400,
       body: { error: `Invalid source: ${name}. Valid sources: ${VALID_SOURCES.join(', ')}` }
@@ -39,7 +40,7 @@ export const handler: Handlers['RefreshSource'] = async (req, { emit, logger }) 
 
   await emit({
     topic: 'fetch-jobs-trigger',
-    data: { source: name, manual: true }
+    data: { source: name as typeof VALID_SOURCES[number], manual: true, limit: 100 }
   })
 
   return {
