@@ -90,115 +90,171 @@ export const handler: Handlers['IndexJob'] = async (input, { state, streams, log
   }
 
   // =========================================================================
-  // STEP 2: Motia State Deduplication (Secondary - within session)
+  // STEP 2: Hash Cache Check (FAST - avoids loading all jobs)
   // =========================================================================
-  const existingJobs = await state.getGroup<Job>('jobs')
+  // Check if we've seen this exact hash before (O(1) lookup)
+  const cachedJobId = await state.get<string>('job-hashes', duplicateHash)
 
-  // 2a: Check exact hash match (original behavior)
-  const existingDuplicate = existingJobs.find(existing => {
-    if (existing.id === job.id) return false
-    return generateDuplicateHash(existing) === duplicateHash
-  })
+  if (cachedJobId && cachedJobId !== job.id) {
+    // Found in hash cache - need to get the existing job to compare
+    const existingJob = await state.get<Job>('jobs', cachedJobId)
 
-  if (existingDuplicate) {
-    const keepExisting =
-      existingDuplicate.healthScore > job.healthScore ||
-      (existingDuplicate.healthScore === job.healthScore &&
-       new Date(existingDuplicate.postedAt) > new Date(job.postedAt))
+    if (existingJob) {
+      const keepExisting =
+        existingJob.healthScore > job.healthScore ||
+        (existingJob.healthScore === job.healthScore &&
+         new Date(existingJob.postedAt) > new Date(job.postedAt))
 
-    if (keepExisting) {
-      logger.info('Duplicate job in state (exact match), keeping existing', {
-        newJobId: job.id,
-        existingJobId: existingDuplicate.id,
-        reason: 'existing has higher score or newer posting'
-      })
-      return
+      if (keepExisting) {
+        logger.info('Duplicate job found via hash cache, keeping existing', {
+          newJobId: job.id,
+          existingJobId: cachedJobId,
+          duplicateHash,
+          reason: 'existing has higher score or newer posting'
+        })
+        return
+      } else {
+        logger.info('Duplicate job found via hash cache, replacing with newer/better version', {
+          newJobId: job.id,
+          oldJobId: cachedJobId,
+          duplicateHash
+        })
+        await state.delete('jobs', cachedJobId)
+        await streams.jobs.delete('all', cachedJobId)
+        await streams.jobs.delete(existingJob.source, cachedJobId)
+        // Update hash cache to point to new job
+        await state.set('job-hashes', duplicateHash, job.id)
+        // Continue to store the new job below
+      }
     } else {
-      logger.info('Duplicate job in state (exact match), replacing with newer/better version', {
-        newJobId: job.id,
-        oldJobId: existingDuplicate.id
+      // Stale cache entry - the job was deleted but hash remains
+      logger.info('Hash cache pointed to deleted job, will index as new', {
+        jobId: job.id,
+        staleJobId: cachedJobId,
+        duplicateHash
       })
-      await state.delete('jobs', existingDuplicate.id)
-      await streams.jobs.delete('all', existingDuplicate.id)
-      await streams.jobs.delete(existingDuplicate.source, existingDuplicate.id)
+      // Update hash cache to point to new job
+      await state.set('job-hashes', duplicateHash, job.id)
     }
   }
 
   // =========================================================================
-  // STEP 2b: Enhanced Fuzzy Deduplication (catches near-duplicates)
+  // STEP 3: Fuzzy Deduplication (only if no exact hash match)
   // =========================================================================
-  // Only check fuzzy if no exact match found
-  if (!existingDuplicate) {
-    // Get recent jobs for fuzzy comparison (limit to window size for performance)
-    const recentJobs = existingJobs.slice(0, FUZZY_DEDUP_WINDOW)
+  // Only load all jobs for fuzzy matching if we didn't find an exact hash match
+  // This is the expensive operation we're trying to avoid
+  if (!cachedJobId || cachedJobId === job.id) {
+    const existingJobs = await state.getGroup<Job>('jobs')
 
-    const fuzzyResult = checkFuzzyDuplicate(job, recentJobs)
+    // Double-check exact hash match in case of race condition or cache miss
+    const existingDuplicate = existingJobs.find(existing => {
+      if (existing.id === job.id) return false
+      return generateDuplicateHash(existing) === duplicateHash
+    })
 
-    if (fuzzyResult.isDuplicate && fuzzyResult.existingJobId) {
-      const fuzzyMatch = existingJobs.find(j => j.id === fuzzyResult.existingJobId)
+    if (existingDuplicate) {
+      const keepExisting =
+        existingDuplicate.healthScore > job.healthScore ||
+        (existingDuplicate.healthScore === job.healthScore &&
+         new Date(existingDuplicate.postedAt) > new Date(job.postedAt))
 
-      if (fuzzyMatch) {
-        // Log detailed fuzzy match information
-        const newJobInfo = getJobDedupInfo(job)
-        const existingJobInfo = getJobDedupInfo(fuzzyMatch)
-
-        logger.info('Fuzzy duplicate detected', {
+      if (keepExisting) {
+        logger.info('Duplicate job in state (exact match), keeping existing', {
           newJobId: job.id,
-          existingJobId: fuzzyMatch.id,
-          similarityScore: fuzzyResult.similarityScore,
-          matchDetails: fuzzyResult.matchDetails,
-          newJob: {
-            title: job.title,
-            company: job.company,
-            location: job.location,
-            normalized: newJobInfo
-          },
-          existingJob: {
-            title: fuzzyMatch.title,
-            company: fuzzyMatch.company,
-            location: fuzzyMatch.location,
-            normalized: existingJobInfo
-          }
+          existingJobId: existingDuplicate.id,
+          reason: 'existing has higher score or newer posting'
         })
+        // Fix cache for future lookups
+        await state.set('job-hashes', duplicateHash, existingDuplicate.id)
+        return
+      } else {
+        logger.info('Duplicate job in state (exact match), replacing with newer/better version', {
+          newJobId: job.id,
+          oldJobId: existingDuplicate.id
+        })
+        await state.delete('jobs', existingDuplicate.id)
+        await streams.jobs.delete('all', existingDuplicate.id)
+        await streams.jobs.delete(existingDuplicate.source, existingDuplicate.id)
+      }
+    }
 
-        // Decide whether to keep existing or replace with new
-        const keepExisting =
-          fuzzyMatch.healthScore > job.healthScore ||
-          (fuzzyMatch.healthScore === job.healthScore &&
-           new Date(fuzzyMatch.postedAt) > new Date(job.postedAt))
+    // Enhanced Fuzzy Deduplication (catches near-duplicates)
+    // Only check fuzzy if no exact match found
+    if (!existingDuplicate) {
+      // Get recent jobs for fuzzy comparison (limit to window size for performance)
+      const recentJobs = existingJobs.slice(0, FUZZY_DEDUP_WINDOW)
 
-        if (keepExisting) {
-          logger.info('Fuzzy duplicate: keeping existing job', {
+      const fuzzyResult = checkFuzzyDuplicate(job, recentJobs)
+
+      if (fuzzyResult.isDuplicate && fuzzyResult.existingJobId) {
+        const fuzzyMatch = existingJobs.find(j => j.id === fuzzyResult.existingJobId)
+
+        if (fuzzyMatch) {
+          // Log detailed fuzzy match information
+          const newJobInfo = getJobDedupInfo(job)
+          const existingJobInfo = getJobDedupInfo(fuzzyMatch)
+
+          logger.info('Fuzzy duplicate detected', {
             newJobId: job.id,
             existingJobId: fuzzyMatch.id,
-            reason: 'existing has higher score or newer posting',
-            similarityScore: fuzzyResult.similarityScore
+            similarityScore: fuzzyResult.similarityScore,
+            matchDetails: fuzzyResult.matchDetails,
+            newJob: {
+              title: job.title,
+              company: job.company,
+              location: job.location,
+              normalized: newJobInfo
+            },
+            existingJob: {
+              title: fuzzyMatch.title,
+              company: fuzzyMatch.company,
+              location: fuzzyMatch.location,
+              normalized: existingJobInfo
+            }
           })
-          return
-        } else {
-          logger.info('Fuzzy duplicate: replacing with newer/better version', {
-            newJobId: job.id,
-            oldJobId: fuzzyMatch.id,
-            similarityScore: fuzzyResult.similarityScore
-          })
-          await state.delete('jobs', fuzzyMatch.id)
-          await streams.jobs.delete('all', fuzzyMatch.id)
-          await streams.jobs.delete(fuzzyMatch.source, fuzzyMatch.id)
+
+          // Decide whether to keep existing or replace with new
+          const keepExisting =
+            fuzzyMatch.healthScore > job.healthScore ||
+            (fuzzyMatch.healthScore === job.healthScore &&
+             new Date(fuzzyMatch.postedAt) > new Date(job.postedAt))
+
+          if (keepExisting) {
+            logger.info('Fuzzy duplicate: keeping existing job', {
+              newJobId: job.id,
+              existingJobId: fuzzyMatch.id,
+              reason: 'existing has higher score or newer posting',
+              similarityScore: fuzzyResult.similarityScore
+            })
+            return
+          } else {
+            logger.info('Fuzzy duplicate: replacing with newer/better version', {
+              newJobId: job.id,
+              oldJobId: fuzzyMatch.id,
+              similarityScore: fuzzyResult.similarityScore
+            })
+            await state.delete('jobs', fuzzyMatch.id)
+            await streams.jobs.delete('all', fuzzyMatch.id)
+            await streams.jobs.delete(fuzzyMatch.source, fuzzyMatch.id)
+          }
         }
       }
     }
   }
 
   // =========================================================================
-  // STEP 3: Store in Motia State (hot cache for fast reads)
+  // STEP 4: Store in Motia State (hot cache for fast reads)
   // =========================================================================
   await state.set('jobs', job.id, job)
+
+  // Store hash in cache for O(1) future duplicate lookups
+  await state.set('job-hashes', duplicateHash, job.id)
 
   // Index the enhanced hash for future dedup checks
   await indexJobHash(job, state)
 
   // =========================================================================
-  // STEP 4: Stream to connected clients (real-time updates)
+  // STEP 5: Stream to connected clients (real-time updates)
   // =========================================================================
   await streams.jobs.set('all', job.id, job)
   await streams.jobs.set(job.source, job.id, job)
@@ -206,12 +262,12 @@ export const handler: Handlers['IndexJob'] = async (input, { state, streams, log
   logger.info('Job indexed and streamed successfully', {
     jobId: job.id,
     source: job.source,
-    wasDuplicate: !!existingDuplicate,
+    duplicateHash,
     enhancedHash
   })
 
   // =========================================================================
-  // STEP 5: Emit event for AI summarization (only for NEW jobs)
+  // STEP 6: Emit event for AI summarization (only for NEW jobs)
   // =========================================================================
   await emit({
     topic: 'job-indexed',

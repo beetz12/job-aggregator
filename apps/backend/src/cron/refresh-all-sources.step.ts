@@ -10,12 +10,37 @@ export const config: CronConfig = {
 }
 
 export const handler: Handlers['RefreshAllSources'] = async ({ emit, logger }) => {
-  logger.info('Scheduled refresh started - triggering all sources')
+  const sources = [
+    'arbeitnow',
+    'remotive',
+    'jobicy',
+    'weworkremotely',
+    'hackernews',
+    'reddit',
+    'wellfound',
+    'googlejobs'
+  ]
 
-  await emit({
-    topic: 'fetch-jobs-trigger',
-    data: { source: 'all', manual: false }
+  logger.info('Scheduled refresh started - triggering sources with staggered delays', {
+    sourceCount: sources.length,
+    delayBetweenMs: 5000
   })
 
-  logger.info('Scheduled refresh triggered for all sources')
+  for (const source of sources) {
+    logger.info('Triggering fetch for source', { source })
+
+    await emit({
+      topic: 'fetch-jobs-trigger',
+      data: { source, manual: false }
+    })
+
+    // Add 5 second delay between sources (except after last one)
+    if (source !== sources[sources.length - 1]) {
+      await new Promise(resolve => setTimeout(resolve, 5000))
+    }
+  }
+
+  logger.info('Scheduled refresh completed - all sources triggered', {
+    sourcesTriggered: sources.length
+  })
 }

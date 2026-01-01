@@ -73,52 +73,72 @@ export const handler: Handlers['FetchRemotive'] = async (input, { emit, logger, 
 
     logger.info('Fetched jobs from Remotive RSS', { count: items.length })
 
+    // Batch configuration to prevent event queue overflow
+    const BATCH_SIZE = 10
+    const BATCH_DELAY = 1000
     let jobsEmitted = 0
 
-    for (const item of items) {
-      try {
-        // Extract company from title (format: "Role at Company")
-        const titleParts = item.title.split(' at ')
-        const jobTitle = titleParts[0]?.trim() || item.title
-        const company = titleParts[1]?.trim() || extractCompanyFromDescription(item.description)
+    // Emit jobs in batches with delays
+    for (let i = 0; i < items.length; i += BATCH_SIZE) {
+      const batch = items.slice(i, i + BATCH_SIZE)
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1
+      const totalBatches = Math.ceil(items.length / BATCH_SIZE)
 
-        // Parse categories/tags
-        const categories = item.category
-          ? (Array.isArray(item.category) ? item.category : [item.category])
-          : []
+      logger.info(`Processing batch ${batchNum}/${totalBatches}`, {
+        source: 'remotive',
+        batchSize: batch.length
+      })
 
-        // Extract tags from categories and title
-        const tags = extractTags(jobTitle, categories)
+      for (const item of batch) {
+        try {
+          // Extract company from title (format: "Role at Company")
+          const titleParts = item.title.split(' at ')
+          const jobTitle = titleParts[0]?.trim() || item.title
+          const company = titleParts[1]?.trim() || extractCompanyFromDescription(item.description)
 
-        // Clean description (remove HTML tags)
-        const cleanDescription = stripHtml(item.description)
+          // Parse categories/tags
+          const categories = item.category
+            ? (Array.isArray(item.category) ? item.category : [item.category])
+            : []
 
-        // Generate unique ID from guid or link
-        const jobId = extractIdFromGuid(item.guid || item.link)
+          // Extract tags from categories and title
+          const tags = extractTags(jobTitle, categories)
 
-        const jobData = {
-          id: jobId,
-          title: jobTitle.substring(0, 200),
-          company: company || 'Unknown Company',
-          location: 'Remote', // Remotive is all remote jobs
-          description: cleanDescription.substring(0, 500),
-          url: item.link,
-          posted_at: new Date(item.pubDate).getTime() / 1000, // Convert to Unix timestamp
-          tags,
-          categories
-        }
+          // Clean description (remove HTML tags)
+          const cleanDescription = stripHtml(item.description)
 
-        await emit({
-          topic: 'normalize-job',
-          data: {
-            source: 'remotive' as const,
-            rawJob: jobData
+          // Generate unique ID from guid or link
+          const jobId = extractIdFromGuid(item.guid || item.link)
+
+          const jobData = {
+            id: jobId,
+            title: jobTitle.substring(0, 200),
+            company: company || 'Unknown Company',
+            location: 'Remote', // Remotive is all remote jobs
+            description: cleanDescription.substring(0, 500),
+            url: item.link,
+            posted_at: new Date(item.pubDate).getTime() / 1000, // Convert to Unix timestamp
+            tags,
+            categories
           }
-        })
-        jobsEmitted++
-      } catch (itemError) {
-        const errorMessage = itemError instanceof Error ? itemError.message : 'Unknown error'
-        logger.warn('Failed to process Remotive job item', { error: errorMessage, title: item.title })
+
+          await emit({
+            topic: 'normalize-job',
+            data: {
+              source: 'remotive' as const,
+              rawJob: jobData
+            }
+          })
+          jobsEmitted++
+        } catch (itemError) {
+          const errorMessage = itemError instanceof Error ? itemError.message : 'Unknown error'
+          logger.warn('Failed to process Remotive job item', { error: errorMessage, title: item.title })
+        }
+      }
+
+      // Delay between batches (but not after the last batch)
+      if (i + BATCH_SIZE < items.length) {
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY))
       }
     }
 

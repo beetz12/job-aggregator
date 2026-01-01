@@ -40,67 +40,87 @@ export const handler: Handlers['FetchWeWorkRemotely'] = async (input, { emit, lo
 
     logger.info('Fetched jobs from We Work Remotely', { count: jobs.length })
 
+    // Batch configuration to prevent event queue overflow
+    const BATCH_SIZE = 10
+    const BATCH_DELAY = 1000
     let jobsEmitted = 0
 
-    for (const item of jobs) {
-      try {
-        // Parse the "Company: Job Title" format
-        const { company, jobTitle } = parseTitle(item.title)
+    // Emit jobs in batches with delays
+    for (let i = 0; i < jobs.length; i += BATCH_SIZE) {
+      const batch = jobs.slice(i, i + BATCH_SIZE)
+      const batchNum = Math.floor(i / BATCH_SIZE) + 1
+      const totalBatches = Math.ceil(jobs.length / BATCH_SIZE)
 
-        // Parse categories/tags
-        const categories = item.category
-          ? (Array.isArray(item.category) ? item.category : [item.category])
-          : []
+      logger.info(`Processing batch ${batchNum}/${totalBatches}`, {
+        source: 'weworkremotely',
+        batchSize: batch.length
+      })
 
-        // Clean description (remove HTML tags)
-        const cleanDescription = stripHtml(item.description)
-
-        // Extract tags from title, description, and categories
-        const tags = extractTags(jobTitle, cleanDescription, categories)
-
-        // Extract location (most WWR jobs are worldwide remote)
-        const location = extractLocation(cleanDescription, categories)
-
-        // Generate unique ID from guid or link
-        const jobId = extractJobId(item.guid || item.link)
-
-        // Parse posted date
-        let postedAt: number
+      for (const item of batch) {
         try {
-          postedAt = new Date(item.pubDate).getTime() / 1000 // Convert to Unix timestamp
-          if (isNaN(postedAt)) {
+          // Parse the "Company: Job Title" format
+          const { company, jobTitle } = parseTitle(item.title)
+
+          // Parse categories/tags
+          const categories = item.category
+            ? (Array.isArray(item.category) ? item.category : [item.category])
+            : []
+
+          // Clean description (remove HTML tags)
+          const cleanDescription = stripHtml(item.description)
+
+          // Extract tags from title, description, and categories
+          const tags = extractTags(jobTitle, cleanDescription, categories)
+
+          // Extract location (most WWR jobs are worldwide remote)
+          const location = extractLocation(cleanDescription, categories)
+
+          // Generate unique ID from guid or link
+          const jobId = extractJobId(item.guid || item.link)
+
+          // Parse posted date
+          let postedAt: number
+          try {
+            postedAt = new Date(item.pubDate).getTime() / 1000 // Convert to Unix timestamp
+            if (isNaN(postedAt)) {
+              postedAt = Date.now() / 1000
+            }
+          } catch {
             postedAt = Date.now() / 1000
           }
-        } catch {
-          postedAt = Date.now() / 1000
-        }
 
-        const jobData = {
-          id: jobId,
-          title: jobTitle.substring(0, 200),
-          company: company || 'Unknown Company',
-          location: location,
-          description: cleanDescription.substring(0, 500),
-          url: item.link,
-          posted_at: postedAt,
-          tags,
-          categories
-        }
-
-        await emit({
-          topic: 'normalize-job',
-          data: {
-            source: 'weworkremotely' as const,
-            rawJob: jobData
+          const jobData = {
+            id: jobId,
+            title: jobTitle.substring(0, 200),
+            company: company || 'Unknown Company',
+            location: location,
+            description: cleanDescription.substring(0, 500),
+            url: item.link,
+            posted_at: postedAt,
+            tags,
+            categories
           }
-        })
-        jobsEmitted++
-      } catch (itemError) {
-        const errorMessage = itemError instanceof Error ? itemError.message : 'Unknown error'
-        logger.warn('Failed to process We Work Remotely job item', {
-          error: errorMessage,
-          title: item.title
-        })
+
+          await emit({
+            topic: 'normalize-job',
+            data: {
+              source: 'weworkremotely' as const,
+              rawJob: jobData
+            }
+          })
+          jobsEmitted++
+        } catch (itemError) {
+          const errorMessage = itemError instanceof Error ? itemError.message : 'Unknown error'
+          logger.warn('Failed to process We Work Remotely job item', {
+            error: errorMessage,
+            title: item.title
+          })
+        }
+      }
+
+      // Delay between batches (but not after the last batch)
+      if (i + BATCH_SIZE < jobs.length) {
+        await new Promise(resolve => setTimeout(resolve, BATCH_DELAY))
       }
     }
 
