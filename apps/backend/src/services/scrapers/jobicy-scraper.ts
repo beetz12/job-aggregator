@@ -1,4 +1,23 @@
 /**
+ * @deprecated This scraper is ORPHANED and NOT IN USE.
+ *
+ * DEPRECATION NOTICE (2026-01-02):
+ * ================================
+ * This file contains legacy Jobicy API scraping logic.
+ * This code is NOT called anywhere in the active codebase.
+ *
+ * All job scraping is now handled by the external Python Scraper API
+ * located at /Users/dave/Work/python-scraper
+ *
+ * The Python scraper handles Jobicy via Playwright with stealth mode.
+ *
+ * This file is preserved for reference only.
+ *
+ * @see /Users/dave/Work/python-scraper - New scraper implementation
+ * @see docs/plans/MIGRATION_PYTHON_SCRAPER_INTEGRATION.md - Migration details
+ */
+
+/**
  * Jobicy Job Scraper
  *
  * Jobicy provides a free JSON API for remote job listings.

@@ -1,4 +1,23 @@
 /**
+ * @deprecated This scraper is deprecated in favor of the Python Scraper API.
+ *
+ * DEPRECATION NOTICE (2026-01-02):
+ * ================================
+ * This file contains legacy Google Jobs scraping logic that used the SerpAPI.
+ * All job scraping is now handled by the external Python Scraper API
+ * located at /Users/dave/Work/python-scraper
+ *
+ * The utility functions (parsePostedAt, extractTags, isRemoteJob) are still
+ * imported by normalize-job.step.ts for backward compatibility with legacy
+ * data formats, but new jobs use the Python API format exclusively.
+ *
+ * DO NOT add new functionality to this file.
+ *
+ * @see /Users/dave/Work/python-scraper - New scraper implementation
+ * @see docs/plans/MIGRATION_PYTHON_SCRAPER_INTEGRATION.md - Migration details
+ */
+
+/**
  * Google Jobs Scraper via SerpAPI
  *
  * SerpAPI provides structured Google Jobs data without the need for

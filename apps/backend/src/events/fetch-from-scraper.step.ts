@@ -32,7 +32,8 @@ const inputSchema = z.object({
   ] as [string, ...string[]]),
   params: z.record(z.string(), z.string()).optional(),
   limit: z.number().optional().default(100),
-  manual: z.boolean().optional().default(false)
+  manual: z.boolean().optional().default(false),
+  test_mode: z.boolean().optional().default(false)
 })
 
 // ============================================================================
@@ -65,7 +66,7 @@ const STAGGER_DELAY_MS = 5000
 // ============================================================================
 
 export const handler: Handlers['FetchFromScraper'] = async (input, { emit, logger, state }) => {
-  const { source, params, limit, manual } = input
+  const { source, params, limit, manual, test_mode } = input
 
   // Handle "all" by emitting individual triggers with staggered delays
   if (source === 'all') {
@@ -80,7 +81,8 @@ export const handler: Handlers['FetchFromScraper'] = async (input, { emit, logge
           source: individualSource,
           params,
           limit,
-          manual
+          manual,
+          test_mode
         }
       })
 
@@ -102,7 +104,7 @@ export const handler: Handlers['FetchFromScraper'] = async (input, { emit, logge
   // Single source fetch
   const circuitBreaker = getCircuitBreaker(source)
 
-  logger.info(`Fetching jobs from scraper API`, { source, limit, params })
+  logger.info(`Fetching jobs from scraper API`, { source, limit, params, test_mode })
 
   try {
     // Check if circuit breaker is allowing requests
@@ -129,7 +131,8 @@ export const handler: Handlers['FetchFromScraper'] = async (input, { emit, logge
       scraperClient.scrapeJobs({
         source: source as JobSource,
         params,
-        limit
+        limit,
+        test_mode
       })
     )
 

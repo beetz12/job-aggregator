@@ -1,4 +1,23 @@
 /**
+ * @deprecated This scraper is ORPHANED and NOT IN USE.
+ *
+ * DEPRECATION NOTICE (2026-01-02):
+ * ================================
+ * This file contains legacy Wellfound (AngelList) scraping logic.
+ * This code is NOT called anywhere in the active codebase.
+ *
+ * All job scraping is now handled by the external Python Scraper API
+ * located at /Users/dave/Work/python-scraper
+ *
+ * The Python scraper handles Wellfound via Firecrawl with better anti-detection.
+ *
+ * This file is preserved for reference only.
+ *
+ * @see /Users/dave/Work/python-scraper - New scraper implementation
+ * @see docs/plans/MIGRATION_PYTHON_SCRAPER_INTEGRATION.md - Migration details
+ */
+
+/**
  * Wellfound (formerly AngelList) Job Scraper
  *
  * Uses fetch-based scraping to extract job listings from Wellfound.

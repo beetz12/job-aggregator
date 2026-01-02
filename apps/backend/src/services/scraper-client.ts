@@ -80,6 +80,7 @@ export interface ScrapeRequest {
   source: JobSource
   params?: Record<string, string>
   limit?: number
+  test_mode?: boolean
 }
 
 /**
@@ -98,6 +99,48 @@ export const scrapeResponseSchema = z.object({
 })
 
 export type ScrapeResponse = z.infer<typeof scrapeResponseSchema>
+
+// ============================================================================
+// Batch Scraping Types
+// ============================================================================
+
+/**
+ * Request for batch scraping multiple sources
+ */
+export interface BatchScrapeRequest {
+  sources: JobSource[]
+  params?: Record<string, string>
+  limit_per_source?: number
+  test_mode?: boolean
+}
+
+/**
+ * Result for a single source in batch operation
+ */
+export interface SourceResult {
+  success: boolean
+  source: string
+  count: number
+  jobs: RawJob[]
+  scrape_duration_ms: number
+  error?: string
+  error_code?: string
+}
+
+/**
+ * Response from batch scrape operation
+ */
+export interface BatchScrapeResponse {
+  success: boolean
+  total_sources: number
+  successful_sources: number
+  failed_sources: number
+  total_jobs: number
+  results: Record<string, SourceResult>
+  scraped_at: string
+  total_duration_ms: number
+  errors_summary?: string[]
+}
 
 // ============================================================================
 // Configuration
@@ -154,7 +197,8 @@ export class ScraperClient {
         body: JSON.stringify({
           source: request.source,
           params: request.params || {},
-          limit: request.limit || 100
+          limit: request.limit || 100,
+          test_mode: request.test_mode ?? false
         }),
         signal: controller.signal
       })
@@ -213,6 +257,83 @@ export class ScraperClient {
         'Unknown error occurred',
         'UNKNOWN_ERROR'
       )
+    }
+  }
+
+  /**
+   * Scrape jobs from multiple sources in a single batch request
+   *
+   * @param request - Batch scrape request with sources array
+   * @returns BatchScrapeResponse with per-source results
+   */
+  async scrapeBatch(request: BatchScrapeRequest): Promise<BatchScrapeResponse> {
+    const controller = new AbortController()
+    // Longer timeout for batch operations (2x default)
+    const timeoutId = setTimeout(() => controller.abort(), this.timeout * 2)
+
+    try {
+      console.log(`[ScraperClient] Batch scraping ${request.sources.length} sources: ${request.sources.join(', ')}`)
+
+      const response = await fetch(`${this.baseUrl}/api/jobs/scrape-batch`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'User-Agent': 'JobAggregator/1.0'
+        },
+        body: JSON.stringify({
+          sources: request.sources,
+          params: request.params || {},
+          limit_per_source: request.limit_per_source || 100,
+          test_mode: request.test_mode ?? false
+        }),
+        signal: controller.signal
+      })
+
+      clearTimeout(timeoutId)
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => 'Unknown error')
+        console.error(`[ScraperClient] Batch API error: ${response.status} - ${errorText}`)
+
+        // Return error response
+        return {
+          success: false,
+          total_sources: request.sources.length,
+          successful_sources: 0,
+          failed_sources: request.sources.length,
+          total_jobs: 0,
+          results: {},
+          scraped_at: new Date().toISOString(),
+          total_duration_ms: 0,
+          errors_summary: [`HTTP ${response.status}: ${errorText}`]
+        }
+      }
+
+      const data = await response.json()
+      console.log(`[ScraperClient] Batch scrape completed: ${data.successful_sources}/${data.total_sources} sources, ${data.total_jobs} jobs`)
+
+      return data as BatchScrapeResponse
+
+    } catch (error) {
+      clearTimeout(timeoutId)
+
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      const isTimeout = error instanceof Error && error.name === 'AbortError'
+
+      console.error(`[ScraperClient] Batch request failed: ${errorMessage}`)
+
+      return {
+        success: false,
+        total_sources: request.sources.length,
+        successful_sources: 0,
+        failed_sources: request.sources.length,
+        total_jobs: 0,
+        results: {},
+        scraped_at: new Date().toISOString(),
+        total_duration_ms: 0,
+        errors_summary: [isTimeout ? `Request timed out after ${this.timeout * 2}ms` : errorMessage]
+      }
     }
   }
 

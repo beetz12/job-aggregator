@@ -1,4 +1,23 @@
 /**
+ * @deprecated This scraper is ORPHANED and NOT IN USE.
+ *
+ * DEPRECATION NOTICE (2026-01-02):
+ * ================================
+ * This file contains legacy We Work Remotely RSS feed parsing logic.
+ * This code is NOT called anywhere in the active codebase.
+ *
+ * All job scraping is now handled by the external Python Scraper API
+ * located at /Users/dave/Work/python-scraper
+ *
+ * The Python scraper handles WeWorkRemotely via Playwright with stealth mode.
+ *
+ * This file is preserved for reference only.
+ *
+ * @see /Users/dave/Work/python-scraper - New scraper implementation
+ * @see docs/plans/MIGRATION_PYTHON_SCRAPER_INTEGRATION.md - Migration details
+ */
+
+/**
  * We Work Remotely Job Scraper
  *
  * Scrapes remote jobs from We Work Remotely RSS feeds.
