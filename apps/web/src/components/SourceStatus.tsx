@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+import Link from 'next/link'
 import { Source } from '@/lib/types'
 import { useRefreshSource } from '@/hooks/useJobs'
 
@@ -17,6 +19,21 @@ const statusColors: Record<string, string> = {
 
 export default function SourceStatus({ sources, isLoading }: SourceStatusProps) {
   const refreshMutation = useRefreshSource()
+  const [refreshingSource, setRefreshingSource] = useState<string | null>(null)
+
+  const handleRefreshSource = (sourceName: string) => {
+    setRefreshingSource(sourceName)
+    refreshMutation.mutate(sourceName, {
+      onSettled: () => setRefreshingSource(null)
+    })
+  }
+
+  const handleRefreshAll = () => {
+    setRefreshingSource('all')
+    refreshMutation.mutate('all', {
+      onSettled: () => setRefreshingSource(null)
+    })
+  }
 
   if (isLoading) {
     return (
@@ -42,11 +59,19 @@ export default function SourceStatus({ sources, isLoading }: SourceStatusProps) 
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-semibold text-white">Source Status</h3>
         <button
-          onClick={() => refreshMutation.mutate('all')}
-          disabled={refreshMutation.isPending}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm px-3 py-1.5 rounded-md transition-colors"
+          onClick={handleRefreshAll}
+          disabled={refreshingSource === 'all'}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 disabled:cursor-not-allowed text-white text-sm px-3 py-1.5 rounded-md transition-colors flex items-center gap-2"
         >
-          {refreshMutation.isPending ? 'Refreshing...' : 'Refresh All'}
+          {refreshingSource === 'all' ? (
+            <>
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+              </svg>
+              Refreshing...
+            </>
+          ) : 'Refresh All'}
         </button>
       </div>
 
@@ -58,7 +83,10 @@ export default function SourceStatus({ sources, isLoading }: SourceStatusProps) 
               !source.isActive ? 'opacity-60' : ''
             }`}
           >
-            <div className="flex items-center">
+            <Link
+              href={`/jobs?source=${source.name}`}
+              className="flex items-center flex-1 hover:opacity-80 transition-opacity"
+            >
               <div className={`w-2 h-2 rounded-full ${statusColors[source.status]} mr-3`}></div>
               <div>
                 <div className="text-white font-medium flex items-center gap-2">
@@ -76,14 +104,30 @@ export default function SourceStatus({ sources, isLoading }: SourceStatusProps) 
                   )}
                 </div>
               </div>
-            </div>
+            </Link>
             {source.isActive && (
               <button
-                onClick={() => refreshMutation.mutate(source.name)}
-                disabled={refreshMutation.isPending}
-                className="text-blue-400 hover:text-blue-300 text-xs disabled:text-gray-500"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  handleRefreshSource(source.name)
+                }}
+                disabled={refreshingSource === source.name}
+                className={`text-xs flex items-center gap-1 transition-colors ml-2 ${
+                  refreshingSource === source.name
+                    ? 'text-gray-500 cursor-not-allowed'
+                    : 'text-blue-400 hover:text-blue-300'
+                }`}
               >
-                Refresh
+                {refreshingSource === source.name ? (
+                  <>
+                    <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"/>
+                    </svg>
+                    Refreshing...
+                  </>
+                ) : 'Refresh'}
               </button>
             )}
           </div>

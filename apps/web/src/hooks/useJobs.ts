@@ -36,9 +36,23 @@ export function useRefreshSource() {
 
   return useMutation({
     mutationFn: refreshSource,
-    onSuccess: () => {
-      // Invalidate both jobs and sources queries after refresh
-      queryClient.invalidateQueries({ queryKey: ['jobs'] })
+    onSuccess: (_data, sourceName) => {
+      if (sourceName === 'all') {
+        // Batch refresh - invalidate all job queries
+        queryClient.invalidateQueries({ queryKey: ['jobs'] })
+      } else {
+        // Single source - only invalidate queries that include this source
+        // This includes the "all jobs" view (no source filter) and the specific source view
+        queryClient.invalidateQueries({
+          queryKey: ['jobs'],
+          predicate: (query) => {
+            const filters = query.queryKey[1] as JobFilters | undefined
+            // Invalidate if no source filter OR if the source matches
+            return !filters?.source || filters.source === sourceName
+          }
+        })
+      }
+      // Always refresh source status (job counts may have changed)
       queryClient.invalidateQueries({ queryKey: ['sources'] })
     },
   })

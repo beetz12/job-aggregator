@@ -25,7 +25,10 @@ export const SCRAPER_SOURCES = [
   'dice',
   'builtin',
   'remotive',
-  'wellfound'
+  'wellfound',
+  'yc_jobs',
+  'themuse',
+  'jobicy_api'
 ] as const
 
 /**
@@ -64,7 +67,10 @@ export const jobSourceEnum = z.enum([
   'braintrust',
   'devitjobs',
   'dice',
-  'builtin'
+  'builtin',
+  'yc_jobs',
+  'themuse',
+  'jobicy_api'
 ])
 
 export type JobSource = z.infer<typeof jobSourceEnum>
@@ -83,7 +89,10 @@ export const scraperSourceEnum = z.enum([
   'dice',
   'builtin',
   'remotive',
-  'wellfound'
+  'wellfound',
+  'yc_jobs',
+  'themuse',
+  'jobicy_api'
 ])
 
 export type ScraperSource = z.infer<typeof scraperSourceEnum>
@@ -206,6 +215,30 @@ export const SOURCE_INFO: Record<JobSource, SourceInfo> = {
     displayName: 'Built In',
     type: 'scraper',
     color: '#0066CC',
+    reliabilityScore: 88,
+    isActive: true
+  },
+  yc_jobs: {
+    name: 'yc_jobs',
+    displayName: 'Y Combinator Jobs',
+    type: 'api',
+    color: '#FF6600',
+    reliabilityScore: 92,
+    isActive: true
+  },
+  themuse: {
+    name: 'themuse',
+    displayName: 'The Muse',
+    type: 'api',
+    color: '#00B388',
+    reliabilityScore: 85,
+    isActive: true
+  },
+  jobicy_api: {
+    name: 'jobicy_api',
+    displayName: 'Jobicy API',
+    type: 'api',
+    color: '#3B82F6',
     reliabilityScore: 88,
     isActive: true
   }

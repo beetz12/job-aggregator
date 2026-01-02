@@ -20,6 +20,10 @@ these issues
 using your  multi-agent team with up to 3 agents and come up with a unified plan with 90% confidence and wait for further instructions.  Use Perplexity Deep to research if needed. My mortgage payment depends on this     
 and If you get this right on the first try, I will tip you $200. ultrathink       
 
+# test and fix
+Okay, please help me test the UI changes yourself using Playwright and fix any issues you
+  find with your multi-agent team working in parallel.  My mortgage payment depends on this and If you get this right on the first try, I will tip you $200. ultrathink 
+
 # analyze and come up with plan
 Please analyze these issues  
 using your  multi-agent team with up to 3 agents and come up with a unified plan with 90% confidence and wait for further instructions.  Use Perplexity Deep to research if needed. My mortgage payment depends on this and If you get this right on the first try, I will tip you $200. ultrathink 
