@@ -43,14 +43,14 @@ export type ParsedLocation = z.infer<typeof parsedLocationSchema>
  * Salary information with normalization
  */
 export const salarySchema = z.object({
-  min: z.number().optional(),
-  max: z.number().optional(),
+  min: z.number().optional().nullable(),
+  max: z.number().optional().nullable(),
   currency: z.string(),
   period: z.string(), // 'yearly', 'monthly', 'hourly', 'daily'
   normalizedYearly: z.object({
-    min: z.number().optional(),
-    max: z.number().optional()
-  }).optional()
+    min: z.number().optional().nullable(),
+    max: z.number().optional().nullable()
+  }).optional().nullable()
 })
 
 export type Salary = z.infer<typeof salarySchema>
@@ -82,13 +82,14 @@ export const jobSchema = z.object({
   skills: z.array(z.string()).optional(),
 
   // Extended fields from Python scraper integration
-  sourceId: z.string().optional(),
-  companyUrl: z.string().optional(),
-  locationParsed: parsedLocationSchema.optional(),
-  salary: salarySchema.optional(),
-  employmentType: z.string().optional(),
-  experienceLevel: z.string().optional(),
-  contentHash: z.string().optional()
+  // Using .nullable() to allow null/undefined values from legacy sources
+  sourceId: z.string().optional().nullable(),
+  companyUrl: z.string().optional().nullable(),
+  locationParsed: parsedLocationSchema.optional().nullable(),
+  salary: salarySchema.optional().nullable(),
+  employmentType: z.string().optional().nullable(),
+  experienceLevel: z.string().optional().nullable(),
+  contentHash: z.string().optional().nullable()
 })
 
 export type Job = z.infer<typeof jobSchema>

@@ -5,13 +5,13 @@
 -- https://supabase.com/dashboard/project/_/sql
 -- =============================================================================
 
--- Step 1: Update jobs table source constraint to include all 12 sources
+-- Step 1: Update jobs table source constraint to include all 13 sources
 ALTER TABLE jobs DROP CONSTRAINT IF EXISTS jobs_source_check;
 ALTER TABLE jobs ADD CONSTRAINT jobs_source_check
   CHECK (source IN (
     'arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound',
     'googlejobs', 'jobicy', 'weworkremotely', 'remoteok',
-    'braintrust', 'devitjobs', 'github'
+    'braintrust', 'devitjobs', 'dice', 'builtin'
   ));
 
 -- Step 2: Add extended fields for Python scraper integration
@@ -52,7 +52,7 @@ ALTER TABLE sources ADD CONSTRAINT sources_name_check
   CHECK (name IN (
     'arbeitnow', 'hackernews', 'reddit', 'remotive', 'wellfound',
     'googlejobs', 'jobicy', 'weworkremotely', 'remoteok',
-    'braintrust', 'devitjobs', 'github'
+    'braintrust', 'devitjobs', 'dice', 'builtin'
   ));
 
 -- Step 6: Insert new sources (if they don't exist)
@@ -64,7 +64,8 @@ INSERT INTO sources (name, status) VALUES
   ('remoteok', 'unknown'),
   ('braintrust', 'unknown'),
   ('devitjobs', 'unknown'),
-  ('github', 'unknown')
+  ('dice', 'unknown'),
+  ('builtin', 'unknown')
 ON CONFLICT (name) DO NOTHING;
 
 -- =============================================================================

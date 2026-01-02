@@ -259,3 +259,96 @@ export interface CoverLetterResponse {
   matchedRequirements: string[]
   generatedAt: string
 }
+
+// ============================================================================
+// Intelligent Job Application System Types (V3)
+// ============================================================================
+
+export type FitRecommendation = 'STRONG_APPLY' | 'APPLY' | 'CONDITIONAL' | 'SKIP'
+export type CompanyRecommendation = 'STRONG_YES' | 'YES' | 'MAYBE' | 'PASS'
+export type HookType = 'direct_relevance' | 'vulnerability' | 'contrarian' | 'achievement'
+
+export interface CompanyScores {
+  compensation: number      // 0-20
+  culture: number           // 0-25
+  familyFriendliness: number // 0-20
+  technicalFit: number      // 0-15
+  industry: number          // 0-10
+  longTermPotential: number // 0-10
+}
+
+export interface CompanyInsights {
+  overallScore: number  // 0-100
+  scores: CompanyScores
+  greenFlags: string[]
+  redFlags: string[]
+  recentNews: string[]
+  recommendation: CompanyRecommendation
+}
+
+export interface MatchAnalysis {
+  overallMatch: number  // 0-100
+  strongMatches: string[]
+  partialMatches: string[]
+  gaps: string[]
+  transferableSkills: string[]
+}
+
+export interface FitScore {
+  composite: number  // 0-100
+  confidence: number
+  recommendation: FitRecommendation
+  reasoning: string
+}
+
+export interface FitAnalysisResult {
+  jobId: string
+  userId: string
+  companyInsights: CompanyInsights
+  matchAnalysis: MatchAnalysis
+  fitScore: FitScore
+  talkingPoints: string[]
+  gapsToAddress: string[]
+  interviewQuestions: string[]
+  analyzedAt: string
+}
+
+export interface GeneratedResume {
+  markdown: string
+  pdfPath?: string
+  highlightedSkills: string[]
+  atsScore: number
+}
+
+export interface GeneratedCoverLetter {
+  markdown: string
+  pdfPath?: string
+  hookType: HookType
+  keyPoints: string[]
+}
+
+export interface QuestionAnswer {
+  question: string
+  answer: string
+  companyUsed: string
+}
+
+export interface ApplicationKitResult {
+  jobId: string
+  userId: string
+  resume: GeneratedResume
+  coverLetter: GeneratedCoverLetter
+  questionAnswers?: QuestionAnswer[]
+  generatedAt: string
+}
+
+export interface CheckFitRequest {
+  jobId: string
+  profileId: string
+}
+
+export interface GenerateApplicationRequest {
+  jobId: string
+  profileId: string
+  applicationQuestions?: string[]
+}

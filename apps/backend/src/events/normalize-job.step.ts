@@ -7,13 +7,11 @@ import { generateContentHash } from '../services/database'
 import { rawJobSchema, type RawJob } from '../services/scraper-client'
 import { parsePostedAt, extractTags, isRemoteJob, type GoogleJobRaw } from '../services/scrapers/googlejobs-scraper'
 import type { Job, JobSourceType } from '../types/job'
+import { jobSourceEnum } from '../services/sources'
 
 // Extended input schema that accepts both old and new formats
 const inputSchema = z.object({
-  source: z.enum([
-    'arbeitnow', 'hackernews', 'reddit', 'remotive', 'googlejobs', 'wellfound',
-    'jobicy', 'weworkremotely', 'remoteok', 'braintrust', 'devitjobs', 'dice', 'builtin'
-  ]),
+  source: jobSourceEnum,
   rawJob: z.record(z.string(), z.unknown()),
   // New field from fetch-from-scraper.step.ts
   fetchedAt: z.string().optional()
@@ -57,7 +55,15 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags: (rawJob.tags as string[]) || [],
-        healthScore: calculateHealthScore(postedAt)
+        healthScore: calculateHealthScore(postedAt),
+        // Extended fields - explicitly undefined for legacy sources
+        sourceId: undefined,
+        companyUrl: undefined,
+        locationParsed: undefined,
+        salary: undefined,
+        employmentType: undefined,
+        experienceLevel: undefined,
+        contentHash: undefined
       }
     } else if (source === 'hackernews') {
       const postedAtRaw = rawJob.posted_at as number | undefined
@@ -81,7 +87,15 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags: [],
-        healthScore: calculateHealthScore(postedAt)
+        healthScore: calculateHealthScore(postedAt),
+        // Extended fields - explicitly undefined for legacy sources
+        sourceId: undefined,
+        companyUrl: undefined,
+        locationParsed: undefined,
+        salary: undefined,
+        employmentType: undefined,
+        experienceLevel: undefined,
+        contentHash: undefined
       }
     } else if (source === 'reddit') {
       const postedAtRaw = rawJob.posted_at as number | undefined
@@ -105,7 +119,15 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags: (rawJob.tags as string[]) || [],
-        healthScore: calculateHealthScore(postedAt)
+        healthScore: calculateHealthScore(postedAt),
+        // Extended fields - explicitly undefined for legacy sources
+        sourceId: undefined,
+        companyUrl: undefined,
+        locationParsed: undefined,
+        salary: undefined,
+        employmentType: undefined,
+        experienceLevel: undefined,
+        contentHash: undefined
       }
     } else if (source === 'remotive') {
       const postedAtRaw = rawJob.posted_at as number | undefined
@@ -124,7 +146,15 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags: (rawJob.tags as string[]) || [],
-        healthScore: calculateHealthScore(postedAt)
+        healthScore: calculateHealthScore(postedAt),
+        // Extended fields - explicitly undefined for legacy sources
+        sourceId: undefined,
+        companyUrl: undefined,
+        locationParsed: undefined,
+        salary: undefined,
+        employmentType: undefined,
+        experienceLevel: undefined,
+        contentHash: undefined
       }
     } else if (source === 'googlejobs') {
       // Cast to GoogleJobRaw for proper typing
@@ -155,7 +185,15 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags,
-        healthScore: calculateHealthScore(postedAt)
+        healthScore: calculateHealthScore(postedAt),
+        // Extended fields - explicitly undefined for legacy sources
+        sourceId: undefined,
+        companyUrl: undefined,
+        locationParsed: undefined,
+        salary: undefined,
+        employmentType: undefined,
+        experienceLevel: undefined,
+        contentHash: undefined
       }
     } else if (source === 'wellfound') {
       // Wellfound (AngelList) jobs from Playwright scraper
@@ -191,7 +229,15 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags,
-        healthScore: calculateHealthScore(postedAt)
+        healthScore: calculateHealthScore(postedAt),
+        // Extended fields - explicitly undefined for legacy sources
+        sourceId: undefined,
+        companyUrl: undefined,
+        locationParsed: undefined,
+        salary: undefined,
+        employmentType: undefined,
+        experienceLevel: undefined,
+        contentHash: undefined
       }
     } else if (source === 'jobicy') {
       // Jobicy remote jobs API
@@ -220,7 +266,15 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags,
-        healthScore: calculateHealthScore(postedAt)
+        healthScore: calculateHealthScore(postedAt),
+        // Extended fields - explicitly undefined for legacy sources
+        sourceId: undefined,
+        companyUrl: undefined,
+        locationParsed: undefined,
+        salary: undefined,
+        employmentType: undefined,
+        experienceLevel: undefined,
+        contentHash: undefined
       }
     } else if (source === 'weworkremotely') {
       // WeWorkRemotely RSS feed jobs
@@ -258,7 +312,15 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         postedAt,
         fetchedAt: new Date().toISOString(),
         tags: [],
-        healthScore: calculateHealthScore(postedAt)
+        healthScore: calculateHealthScore(postedAt),
+        // Extended fields - explicitly undefined for legacy sources
+        sourceId: undefined,
+        companyUrl: undefined,
+        locationParsed: undefined,
+        salary: undefined,
+        employmentType: undefined,
+        experienceLevel: undefined,
+        contentHash: undefined
       }
     } else {
       logger.warn('Unknown source, skipping', { source })

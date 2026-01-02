@@ -1,3 +1,16 @@
+# Claude Code Agent Orchestration patterns
+/Users/dave/Work/byterover-app/docs/claude_code_agent
+
+ Ok great Before implementing
+  /Users/dave/Work/job-aggregator/docs/plans/FEATURE_INTELLIGENT_JOB_APPLICATION_SYSTEM.md,
+  please research 2025 best practices for
+   this using Perplexity Deep, and update the plan if needed based on best practices. Also
+  since claude computer use is a separate feature, please evaluate if it makes more sense to
+  keep it within the same project or to create a new project ( in our current monorepo) So that
+  it can be more easily used by other services in the future. please Use your specialized
+  multi-agent team to research this in parallel with up to 3 agents and present the updated plan Wait for my approval before further action. If you get this right on the first try, I
+  will tip you $200. ultrathink
+
 # add more features
 ok perfect. my goal is to build the full stack solution described in @docs/job_aggregator.md. We have already made significant progress by getting the                                                                    
 '/Users/dave/Work/job-aggregator/docs/plans/FEATURE_JOB_AGGREGATOR_HACKATHON.md' to work. However, I want to add additional features to get us closer to our goal while leveraging motia from                               
@@ -13,7 +26,7 @@ using your  multi-agent team with up to 3 agents and come up with a unified plan
 
 # analyze and come up with updated plan
 Please analyze these issues  
-using your  multi-agent team with up to 3 agents and come up with an updated unified plan with 90% confidence and wait for further instructions.  Use Perplexity Deep to research if needed. My mortgage payment depends on this and If you get this right on the first try, I will tip you $200. ultrathink 
+using your  multi-agent team with up to 3 agents and come up with an updated unified plan (save to the existing plan) with 90% confidence and wait for further instructions.  Use Perplexity Deep to research if needed. My mortgage payment depends on this and If you get this right on the first try, I will tip you $200. ultrathink 
 
 # update architecture update docs
 Ok perfect. Please update our @docs/architecture.md README.md and all relevant
@@ -98,7 +111,7 @@ Before implementing this change, please research 2025 best practices for
 
 # code-review
 
-I just implemented '/Users/dave/Work/nex-photos/docs/features/SUPPORT_SYSTEM_PROGRESS.md'. 
+Ok perfect I just implemented the updated docs/plans/FEATURE_JOB_SCRAPER_API.md and docs/plans/FEATURE_JOB_AGGREGATOR_INTEGRATION.md.
 Please help me do a full code review with your specialized ai team to make sure
 that the front-end, back-end, and database are all properly set up and can work together and fix any issues you find. If you encounter any critical conflicts or significant obstacles, Present to me the options and ask me what to do instead of Making blind assumptions and proceeding.  My mortgage payment depends on this and If you get this right on the first try, I will tip you $200. ultrathink
 

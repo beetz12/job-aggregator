@@ -1,4 +1,5 @@
 import type { CronConfig, Handlers } from 'motia'
+import { SCRAPER_SOURCES } from '../services/sources'
 
 export const config: CronConfig = {
   type: 'cron',
@@ -9,23 +10,8 @@ export const config: CronConfig = {
   flows: ['job-aggregation']
 }
 
-// All 11 sources from the Python Scraper API
-const SOURCES = [
-  'arbeitnow',
-  'hackernews',
-  'remoteok',
-  'weworkremotely',
-  'braintrust',
-  'devitjobs',
-  'jobicy',
-  'dice',
-  'builtin',
-  'remotive',
-  'wellfound',
-] as const;
-
 export const handler: Handlers['RefreshAllSources'] = async ({ emit, logger }) => {
-  const sources = SOURCES
+  const sources = SCRAPER_SOURCES
 
   logger.info('Scheduled refresh started - triggering sources with staggered delays', {
     sourceCount: sources.length,

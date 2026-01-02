@@ -12,6 +12,10 @@ import {
   CreateApplicationInput,
   UpdateApplicationInput,
   CoverLetterResponse,
+  FitAnalysisResult,
+  ApplicationKitResult,
+  CheckFitRequest,
+  GenerateApplicationRequest,
 } from './types'
 
 // Environment variable for explicit API URL configuration
@@ -496,6 +500,61 @@ export async function generateCoverLetter(
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Failed to generate cover letter' }))
     throw new Error(error.error || `Failed to generate cover letter: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+// ============================================================================
+// Intelligent Job Application System API (V3)
+// ============================================================================
+
+/**
+ * Check fit for a job - runs the Analysis Agent to get deep fit analysis
+ */
+export async function checkFit(request: CheckFitRequest): Promise<FitAnalysisResult> {
+  const apiBase = await discoverApiBase()
+
+  const res = await fetch(`${apiBase}/jobs/${request.jobId}/check-fit`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      profileId: request.profileId,
+    }),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to check fit' }))
+    throw new Error(error.error || `Failed to check fit: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+/**
+ * Generate application materials - runs the Generation Agent to create resume, cover letter, etc.
+ */
+export async function generateApplication(
+  request: GenerateApplicationRequest
+): Promise<ApplicationKitResult> {
+  const apiBase = await discoverApiBase()
+
+  const res = await fetch(`${apiBase}/jobs/${request.jobId}/generate-application`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      profileId: request.profileId,
+      applicationQuestions: request.applicationQuestions,
+    }),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to generate application' }))
+    throw new Error(error.error || `Failed to generate application: ${res.status}`)
   }
 
   return res.json()

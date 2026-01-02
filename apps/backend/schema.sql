@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS profiles (
   remote_preference TEXT CHECK (remote_preference IN ('remote-only', 'hybrid', 'onsite', 'flexible')),
   salary_min INTEGER,
   salary_max INTEGER,
+  salary_currency TEXT DEFAULT 'USD',
   bio TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
@@ -144,9 +145,11 @@ CREATE TABLE IF NOT EXISTS applications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   job_id TEXT REFERENCES jobs(id) ON DELETE CASCADE,
   profile_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+  job_title TEXT NOT NULL,  -- Denormalized for quick display
+  company TEXT NOT NULL,    -- Denormalized for quick display
   status TEXT DEFAULT 'saved' CHECK (status IN ('saved', 'applied', 'interviewing', 'offered', 'rejected', 'withdrawn')),
   applied_at TIMESTAMPTZ,
-  notes TEXT,
+  notes TEXT DEFAULT '',
   follow_up_date DATE,
   resume_version TEXT,
   cover_letter TEXT,

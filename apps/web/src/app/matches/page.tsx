@@ -4,7 +4,9 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useMyProfile, useMatchedJobs } from '@/hooks/useProfile'
 import { useCreateApplication } from '@/hooks/useApplications'
-import { MatchedJobItem, Job } from '@/lib/types'
+import { useCheckFit, useGenerateApplication } from '@/hooks/useIntelligentApplication'
+import FitAnalysisModal from '@/components/FitAnalysisModal'
+import { MatchedJobItem, Job, FitAnalysisResult, ApplicationKitResult } from '@/lib/types'
 
 const sourceColors: Record<string, string> = {
   arbeitnow: 'bg-blue-600',
@@ -43,11 +45,15 @@ function getTimeAgo(dateString: string): string {
 function MatchedJobCard({
   match,
   onSave,
+  onCheckFit,
   isSaving,
+  isCheckingFit,
 }: {
   match: MatchedJobItem
   onSave: (job: Job) => void
+  onCheckFit: (job: Job) => void
   isSaving: boolean
+  isCheckingFit: boolean
 }) {
   const { job, matchScore } = match
   const timeAgo = getTimeAgo(job.postedAt)
@@ -176,26 +182,57 @@ function MatchedJobCard({
       )}
 
       <div className="flex justify-between items-center pt-3 border-t border-gray-700">
-        <button
-          onClick={() => onSave(job)}
-          disabled={isSaving}
-          className="flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors disabled:opacity-50"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => onSave(job)}
+            disabled={isSaving}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors disabled:opacity-50"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-            />
-          </svg>
-          {isSaving ? 'Saving...' : 'Save Job'}
-        </button>
+            <svg
+              className="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+              />
+            </svg>
+            {isSaving ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            onClick={() => onCheckFit(job)}
+            disabled={isCheckingFit}
+            className="flex items-center gap-2 text-sm bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg transition-colors disabled:opacity-50"
+          >
+            {isCheckingFit ? (
+              <>
+                <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-white" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Check Fit
+              </>
+            )}
+          </button>
+        </div>
         <Link
           href={`/jobs/${job.id}`}
           className="text-blue-400 hover:text-blue-300 text-sm font-medium"
@@ -215,7 +252,15 @@ export default function MatchesPage() {
     error: matchesError,
   } = useMatchedJobs(profile?.id || '')
   const createApplication = useCreateApplication()
+  const checkFitMutation = useCheckFit()
+  const generateApplicationMutation = useGenerateApplication()
+
   const [savingJobId, setSavingJobId] = useState<string | null>(null)
+  const [checkingFitJobId, setCheckingFitJobId] = useState<string | null>(null)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null)
+  const [fitAnalysis, setFitAnalysis] = useState<FitAnalysisResult | null>(null)
+  const [applicationKit, setApplicationKit] = useState<ApplicationKitResult | null>(null)
   const [toast, setToast] = useState<{
     type: 'success' | 'error'
     message: string
@@ -247,6 +292,56 @@ export default function MatchesPage() {
     } finally {
       setSavingJobId(null)
     }
+  }
+
+  const handleCheckFit = async (job: Job) => {
+    if (!profile) return
+
+    setSelectedJob(job)
+    setFitAnalysis(null)
+    setApplicationKit(null)
+    setModalOpen(true)
+    setCheckingFitJobId(job.id)
+
+    try {
+      const result = await checkFitMutation.mutateAsync({
+        jobId: job.id,
+        profileId: profile.id,
+      })
+      setFitAnalysis(result)
+    } catch (error) {
+      showToast(
+        'error',
+        error instanceof Error ? error.message : 'Failed to check fit'
+      )
+    } finally {
+      setCheckingFitJobId(null)
+    }
+  }
+
+  const handleGenerateApplication = async () => {
+    if (!profile || !selectedJob) return
+
+    try {
+      const result = await generateApplicationMutation.mutateAsync({
+        jobId: selectedJob.id,
+        profileId: profile.id,
+      })
+      setApplicationKit(result)
+      showToast('success', 'Application materials generated!')
+    } catch (error) {
+      showToast(
+        'error',
+        error instanceof Error ? error.message : 'Failed to generate application'
+      )
+    }
+  }
+
+  const handleCloseModal = () => {
+    setModalOpen(false)
+    setSelectedJob(null)
+    setFitAnalysis(null)
+    setApplicationKit(null)
   }
 
   // Loading state
@@ -427,11 +522,26 @@ export default function MatchesPage() {
                 key={match.job.id}
                 match={match}
                 onSave={handleSaveJob}
+                onCheckFit={handleCheckFit}
                 isSaving={savingJobId === match.job.id}
+                isCheckingFit={checkingFitJobId === match.job.id}
               />
             ))}
           </div>
         )}
+
+        {/* Fit Analysis Modal */}
+        <FitAnalysisModal
+          isOpen={modalOpen}
+          onClose={handleCloseModal}
+          fitAnalysis={fitAnalysis}
+          applicationKit={applicationKit}
+          isLoadingFit={checkFitMutation.isPending}
+          isLoadingApplication={generateApplicationMutation.isPending}
+          onGenerateApplication={handleGenerateApplication}
+          jobTitle={selectedJob?.title || ''}
+          company={selectedJob?.company || ''}
+        />
       </div>
     </div>
   )

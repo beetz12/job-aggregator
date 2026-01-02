@@ -18,9 +18,12 @@ export function getPool(): Pool | null {
   }
 
   if (!pool) {
+    // Detect if SSL should be disabled (for local PostgreSQL)
+    const sslDisabled = databaseUrl?.includes('sslmode=disable')
+
     pool = new Pool({
       connectionString: databaseUrl,
-      ssl: {
+      ssl: sslDisabled ? false : {
         rejectUnauthorized: false // Required for cloud PostgreSQL (Neon, Supabase)
       },
       max: 5, // Reduced for serverless/Railway
