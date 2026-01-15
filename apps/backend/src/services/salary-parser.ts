@@ -8,7 +8,7 @@ export interface ParsedSalary {
   max?: number;
   currency: string;
   period: 'hourly' | 'daily' | 'weekly' | 'monthly' | 'yearly';
-  normalizedYearly?: { min?: number; max?: number };
+  normalized_yearly?: { min?: number; max?: number };
   raw: string;
 }
 
@@ -319,12 +319,12 @@ export function parseSalary(
   if (salaryMax !== undefined) result.max = salaryMax;
 
   // Calculate normalized yearly USD
-  result.normalizedYearly = {};
+  result.normalized_yearly = {};
   if (salaryMin !== undefined) {
-    result.normalizedYearly.min = normalizeToYearlyUSD(salaryMin, detectedCurrency, period);
+    result.normalized_yearly.min = normalizeToYearlyUSD(salaryMin, detectedCurrency, period);
   }
   if (salaryMax !== undefined) {
-    result.normalizedYearly.max = normalizeToYearlyUSD(salaryMax, detectedCurrency, period);
+    result.normalized_yearly.max = normalizeToYearlyUSD(salaryMax, detectedCurrency, period);
   }
 
   return result;

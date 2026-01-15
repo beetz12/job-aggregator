@@ -1,24 +1,48 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { ALL_JOB_SOURCES, SOURCE_DISPLAY_NAMES, type JobSource } from '@/lib/types'
+import {
+  ALL_JOB_SOURCES,
+  SOURCE_DISPLAY_NAMES,
+  type JobSource,
+  type JobFilters,
+  type EmploymentType,
+  type ExperienceLevel,
+} from '@/lib/types'
+import FilterPanel from './FilterPanel'
 
 interface SearchBarProps {
-  onFilterChange: (filters: {
-    source?: string
-    remote?: boolean
-    search?: string
-  }) => void
+  onFilterChange: (filters: JobFilters) => void
+  initialFilters?: JobFilters
+  // Legacy props for backwards compatibility
   initialSource?: string
   initialRemote?: boolean
   initialSearch?: string
 }
 
-export default function SearchBar({ onFilterChange, initialSource, initialRemote, initialSearch }: SearchBarProps) {
-  const [source, setSource] = useState(initialSource || '')
-  const [remote, setRemote] = useState(initialRemote || false)
-  const [search, setSearch] = useState(initialSearch || '')
-  const [debouncedSearch, setDebouncedSearch] = useState(initialSearch || '')
+export default function SearchBar({
+  onFilterChange,
+  initialFilters,
+  initialSource,
+  initialRemote,
+  initialSearch,
+}: SearchBarProps) {
+  // Use initialFilters if provided, otherwise fall back to legacy props
+  const [source, setSource] = useState(initialFilters?.source || initialSource || '')
+  const [remote, setRemote] = useState(initialFilters?.remote || initialRemote || false)
+  const [search, setSearch] = useState(initialFilters?.search || initialSearch || '')
+  const [debouncedSearch, setDebouncedSearch] = useState(initialFilters?.search || initialSearch || '')
+
+  // Advanced filter state
+  const [advancedFilters, setAdvancedFilters] = useState<Partial<JobFilters>>({
+    tags: initialFilters?.tags,
+    salaryMin: initialFilters?.salaryMin,
+    salaryMax: initialFilters?.salaryMax,
+    locations: initialFilters?.locations,
+    employmentTypes: initialFilters?.employmentTypes,
+    experienceLevels: initialFilters?.experienceLevels,
+  })
+  const [isAdvancedExpanded, setIsAdvancedExpanded] = useState(false)
 
   // Debounce search input
   useEffect(() => {
@@ -28,14 +52,15 @@ export default function SearchBar({ onFilterChange, initialSource, initialRemote
     return () => clearTimeout(timer)
   }, [search])
 
-  // Trigger filter change when debounced search changes
+  // Trigger filter change when any filter changes
   useEffect(() => {
     onFilterChange({
       source: source || undefined,
       remote,
-      search: debouncedSearch || undefined
+      search: debouncedSearch || undefined,
+      ...advancedFilters,
     })
-  }, [debouncedSearch, source, remote, onFilterChange])
+  }, [debouncedSearch, source, remote, advancedFilters, onFilterChange])
 
   const handleSourceChange = (value: string) => {
     setSource(value)
@@ -48,6 +73,13 @@ export default function SearchBar({ onFilterChange, initialSource, initialRemote
   const handleSearchChange = (value: string) => {
     setSearch(value)
   }
+
+  const handleAdvancedFiltersChange = useCallback((newFilters: Partial<JobFilters>) => {
+    setAdvancedFilters((prev) => ({
+      ...prev,
+      ...newFilters,
+    }))
+  }, [])
 
   const clearSearch = useCallback(() => {
     setSearch('')
@@ -120,6 +152,19 @@ export default function SearchBar({ onFilterChange, initialSource, initialRemote
           </label>
         </div>
       </div>
+
+      {/* Advanced Filters Panel */}
+      <FilterPanel
+        filters={{
+          ...advancedFilters,
+          source: source || undefined,
+          remote,
+          search: debouncedSearch || undefined,
+        }}
+        onFiltersChange={handleAdvancedFiltersChange}
+        isExpanded={isAdvancedExpanded}
+        onToggleExpand={() => setIsAdvancedExpanded((prev) => !prev)}
+      />
     </div>
   )
 }

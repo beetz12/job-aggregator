@@ -15,7 +15,7 @@ export function useCheckFit() {
     mutationFn: (request: CheckFitRequest) => checkFit(request),
     onSuccess: (data) => {
       // Cache the fit analysis result
-      queryClient.setQueryData(['fitAnalysis', data.jobId], data)
+      queryClient.setQueryData(['fitAnalysis', data.job_id], data)
     },
   })
 }
@@ -31,7 +31,7 @@ export function useGenerateApplication() {
     mutationFn: (request: GenerateApplicationRequest) => generateApplication(request),
     onSuccess: (data) => {
       // Cache the application kit
-      queryClient.setQueryData(['applicationKit', data.jobId], data)
+      queryClient.setQueryData(['applicationKit', data.job_id], data)
     },
   })
 }

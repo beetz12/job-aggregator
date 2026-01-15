@@ -5,12 +5,12 @@ import { ALL_JOB_SOURCES, SOURCE_INFO, type JobSource } from '../services/source
 
 const sourceSchema = z.object({
   name: z.string(),
-  displayName: z.string(),
-  lastFetch: z.string().nullable(),
-  jobCount: z.number(),
+  display_name: z.string(),
+  last_fetch: z.string().nullable(),
+  job_count: z.number(),
   status: z.enum(['success', 'error', 'pending', 'unknown']),
   error: z.string().optional(),
-  isActive: z.boolean(),
+  is_active: z.boolean(),
   color: z.string()
 })
 
@@ -40,12 +40,12 @@ export const handler: Handlers['GetSources'] = async (_, { state, logger }) => {
       const info = SOURCE_INFO[name as JobSource]
       return {
         name,
-        displayName: info?.displayName || name,
-        lastFetch: metadata?.lastFetch || null,
-        jobCount: metadata?.jobCount || 0,
+        display_name: info?.displayName || name,
+        last_fetch: metadata?.lastFetch || null,
+        job_count: metadata?.jobCount || 0,
         status: metadata?.status || 'unknown' as const,
         error: metadata?.error,
-        isActive: info?.isActive ?? false,
+        is_active: info?.isActive ?? false,
         color: info?.color || '#6B7280'
       }
     })

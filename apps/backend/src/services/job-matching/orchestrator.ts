@@ -8,7 +8,14 @@ import type {
   MatchAnalysis,
   ParsedRequirements,
   CompanyInsights,
-  RecruiterEmail
+  RecruiterEmail,
+  JobCriteria,
+  CriteriaMatch,
+  ShouldApply,
+  CompensationCriteria,
+  LocationCriteria,
+  CultureCriteria,
+  TechnicalStackCriteria
 } from '../../types/job-matching'
 import type { Job } from '../../types/job'
 
@@ -152,7 +159,7 @@ async function analyzeJob(job: Job, user: UserProfile, now: string): Promise<Mat
       `Why are you interested in ${job.company}?`,
       'What are your career goals?'
     ],
-    createdAt: now
+    created_at: now
   }
 }
 
@@ -176,7 +183,7 @@ async function generateMaterials(options: GenerateMaterialsOptions): Promise<App
   const kit: ApplicationKit = {
     jobId: job.id,
     userId: user.id,
-    createdAt: now
+    created_at: now
   }
 
   // Generate resume and cover letter for full/quick apply
@@ -303,7 +310,7 @@ function calculateFitScore(skillMatches: SkillMatches, user: UserProfile, job: J
   let composite = skillMatches.overallMatch
 
   // Bonus for remote preference match
-  if (job.remote && user.preferences?.remotePreference === 'remote-only') {
+  if (job.remote && user.preferences?.remote_preference === 'remote-only') {
     composite = Math.min(100, composite + 10)
   }
 
@@ -518,6 +525,465 @@ Best regards`,
       type: 'decline'
     }
   }
+}
+
+// ============================================================================
+// Enhanced Check-Fit Helper Functions - Career Advisor Integration (Phase 6)
+// ============================================================================
+
+/**
+ * Calculate salary alignment based on job salary and user criteria
+ */
+export function calculateSalaryAlignment(
+  jobSalary: { min?: number | null; max?: number | null; normalized_yearly?: { min?: number | null; max?: number | null } | null } | null | undefined,
+  compensation: CompensationCriteria
+): 'above' | 'within' | 'below' | 'unknown' {
+  // Use normalized yearly salary if available, otherwise use raw values
+  const salaryMin = jobSalary?.normalized_yearly?.min ?? jobSalary?.min
+  const salaryMax = jobSalary?.normalized_yearly?.max ?? jobSalary?.max
+
+  // If no salary information available
+  if (salaryMin == null && salaryMax == null) {
+    return 'unknown'
+  }
+
+  const { floor, target } = compensation
+
+  // Use the max salary for comparison if available, otherwise use min
+  const compareSalary = salaryMax ?? salaryMin
+
+  if (compareSalary == null) {
+    return 'unknown'
+  }
+
+  // Above target is great
+  if (compareSalary >= target) {
+    return 'above'
+  }
+
+  // Between floor and target is acceptable
+  if (compareSalary >= floor) {
+    return 'within'
+  }
+
+  // Below floor
+  return 'below'
+}
+
+/**
+ * Check if job location matches user preferences
+ */
+export function checkLocationMatch(
+  job: Job,
+  locationCriteria: LocationCriteria
+): boolean {
+  const { remote: remotePref, geoRestrictions } = locationCriteria
+
+  // Check remote preference
+  if (remotePref === 'required') {
+    // Must be remote
+    if (!job.remote) {
+      // Check if location_parsed indicates remote
+      if (!job.location_parsed?.is_remote) {
+        return false
+      }
+    }
+  } else if (remotePref === 'preferred') {
+    // Remote is preferred but not required - always passes
+  }
+  // 'flexible' - any location works
+
+  // Check geographic restrictions if provided
+  if (geoRestrictions && geoRestrictions.length > 0) {
+    // If job has no location and is not remote, might not match
+    if (!job.location && !job.remote) {
+      return false
+    }
+
+    // If job is fully remote, it matches geo restrictions
+    if (job.remote) {
+      return true
+    }
+
+    // Check if job location matches any of the geo restrictions
+    const jobLocation = job.location?.toLowerCase() || ''
+    const parsedCountry = job.location_parsed?.country?.toLowerCase() || ''
+    const parsedCity = job.location_parsed?.city?.toLowerCase() || ''
+    const parsedState = job.location_parsed?.state?.toLowerCase() || ''
+
+    return geoRestrictions.some(geo => {
+      const geoLower = geo.toLowerCase()
+      return jobLocation.includes(geoLower) ||
+             parsedCountry.includes(geoLower) ||
+             parsedCity.includes(geoLower) ||
+             parsedState.includes(geoLower)
+    })
+  }
+
+  return true
+}
+
+/**
+ * Analyze culture fit based on job description and user criteria
+ */
+export function analyzeCultureFit(
+  job: Job,
+  cultureCriteria: CultureCriteria
+): { green: string[]; red: string[] } {
+  const description = job.description.toLowerCase()
+  const greenFlags: string[] = []
+  const redFlags: string[] = []
+
+  // Check for positive culture indicators
+  const cultureValueKeywords: Record<string, string[]> = {
+    'work-life balance': ['work-life balance', 'work life balance', 'flexible hours', 'flexible schedule', 'family friendly', 'parental leave'],
+    'remote work': ['remote', 'work from home', 'wfh', 'distributed team', 'async'],
+    'learning & growth': ['learning', 'development', 'growth', 'mentorship', 'training', 'conferences', 'education'],
+    'diversity & inclusion': ['diversity', 'inclusion', 'dei', 'belonging', 'inclusive', 'equal opportunity'],
+    'collaboration': ['collaborative', 'team-oriented', 'cross-functional', 'teamwork'],
+    'innovation': ['innovation', 'cutting-edge', 'greenfield', 'r&d', 'experiment'],
+    'transparency': ['transparent', 'open communication', 'feedback culture'],
+    'autonomy': ['autonomous', 'self-directed', 'ownership', 'empowerment']
+  }
+
+  for (const value of cultureCriteria.values) {
+    const valueLower = value.toLowerCase()
+    const keywords = cultureValueKeywords[valueLower] || [valueLower]
+
+    for (const keyword of keywords) {
+      if (description.includes(keyword)) {
+        greenFlags.push(`Found "${value}" indicator: ${keyword}`)
+        break
+      }
+    }
+  }
+
+  // Check for red flags
+  const redFlagKeywords: Record<string, string[]> = {
+    'overwork culture': ['fast-paced', '24/7', 'hustle', 'high pressure', 'intense environment', 'work hard play hard'],
+    'unclear expectations': ['wear many hats', 'rockstar', 'ninja', 'guru', 'unicorn'],
+    'micromanagement': ['micromanage', 'closely monitored', 'strict supervision'],
+    'low compensation': ['competitive salary', 'market rate', 'commensurate with experience'],
+    'high turnover': ['growing team', 'rapid expansion', 'hiring spree'],
+    'startup chaos': ['pre-revenue', 'pre-seed', 'bootstrap', 'no funding']
+  }
+
+  for (const flag of cultureCriteria.redFlags) {
+    const flagLower = flag.toLowerCase()
+    const keywords = redFlagKeywords[flagLower] || [flagLower]
+
+    for (const keyword of keywords) {
+      if (description.includes(keyword)) {
+        redFlags.push(`Detected "${flag}": found "${keyword}"`)
+        break
+      }
+    }
+  }
+
+  // Also check leadership style if specified
+  if (cultureCriteria.leadershipStyle) {
+    const style = cultureCriteria.leadershipStyle.toLowerCase()
+    const leadershipKeywords: Record<string, string[]> = {
+      'servant leadership': ['servant leader', 'supportive', 'empowering', 'coach'],
+      'collaborative': ['collaborative', 'consensus', 'team decision'],
+      'visionary': ['vision', 'strategic', 'innovative leadership'],
+      'hands-off': ['autonomous', 'self-directed', 'independence']
+    }
+
+    const keywords = leadershipKeywords[style] || [style]
+    for (const keyword of keywords) {
+      if (description.includes(keyword)) {
+        greenFlags.push(`Leadership style match: ${style}`)
+        break
+      }
+    }
+  }
+
+  return { green: greenFlags, red: redFlags }
+}
+
+/**
+ * Calculate tech stack coverage percentage
+ */
+export function calculateTechStackCoverage(
+  job: Job,
+  techCriteria: TechnicalStackCriteria
+): number {
+  const description = job.description.toLowerCase()
+  const jobSkills = job.skills || []
+  const jobSkillsLower = jobSkills.map(s => s.toLowerCase())
+
+  const { mustHave, avoid } = techCriteria
+
+  if (mustHave.length === 0) {
+    return 100 // No requirements means full coverage
+  }
+
+  let matchCount = 0
+  let avoidCount = 0
+
+  // Check must-have technologies
+  for (const tech of mustHave) {
+    const techLower = tech.toLowerCase()
+    if (jobSkillsLower.includes(techLower) || description.includes(techLower)) {
+      matchCount++
+    }
+  }
+
+  // Check avoided technologies (penalty)
+  if (avoid && avoid.length > 0) {
+    for (const tech of avoid) {
+      const techLower = tech.toLowerCase()
+      if (jobSkillsLower.includes(techLower) || description.includes(techLower)) {
+        avoidCount++
+      }
+    }
+  }
+
+  // Calculate base coverage
+  let coverage = (matchCount / mustHave.length) * 100
+
+  // Apply penalty for avoided technologies (reduce by 10% per avoided tech found)
+  if (avoidCount > 0) {
+    coverage = Math.max(0, coverage - (avoidCount * 10))
+  }
+
+  return Math.round(coverage)
+}
+
+/**
+ * Detect company stage from job description
+ */
+export function detectCompanyStage(job: Job): 'startup' | 'growth' | 'enterprise' | 'unknown' {
+  const description = job.description.toLowerCase()
+  const company = job.company.toLowerCase()
+
+  // Startup indicators
+  const startupKeywords = ['startup', 'seed', 'series a', 'early-stage', 'pre-revenue', 'founded 202', 'founded 2024', 'founded 2023', 'small team', 'first hire']
+  for (const keyword of startupKeywords) {
+    if (description.includes(keyword) || company.includes(keyword)) {
+      return 'startup'
+    }
+  }
+
+  // Enterprise indicators
+  const enterpriseKeywords = ['fortune 500', 'fortune500', 'enterprise', 'global company', '10,000', '10000 employees', 'publicly traded', 'nasdaq', 'nyse', 'established company']
+  for (const keyword of enterpriseKeywords) {
+    if (description.includes(keyword) || company.includes(keyword)) {
+      return 'enterprise'
+    }
+  }
+
+  // Growth indicators
+  const growthKeywords = ['series b', 'series c', 'series d', 'scale-up', 'scaleup', 'hypergrowth', 'rapid growth', 'expanding team', '100-500', '200-1000']
+  for (const keyword of growthKeywords) {
+    if (description.includes(keyword) || company.includes(keyword)) {
+      return 'growth'
+    }
+  }
+
+  return 'unknown'
+}
+
+/**
+ * Calculate full criteria match
+ */
+export function calculateCriteriaMatch(
+  job: Job,
+  criteria: JobCriteria
+): CriteriaMatch {
+  // Salary alignment
+  const salaryAlignment = criteria.compensation
+    ? calculateSalaryAlignment(job.salary, criteria.compensation)
+    : 'unknown'
+
+  // Location match
+  const locationMatch = criteria.location
+    ? checkLocationMatch(job, criteria.location)
+    : true
+
+  // Culture fit
+  const cultureFlags = criteria.culture
+    ? analyzeCultureFit(job, criteria.culture)
+    : { green: [], red: [] }
+
+  // Tech stack coverage
+  const techStackCoverage = criteria.technicalStack
+    ? calculateTechStackCoverage(job, criteria.technicalStack)
+    : 100
+
+  // Company stage match
+  let companyStageMatch = true
+  if (criteria.companyStage && criteria.companyStage !== 'any') {
+    const detectedStage = detectCompanyStage(job)
+    companyStageMatch = detectedStage === 'unknown' || detectedStage === criteria.companyStage
+  }
+
+  return {
+    salaryAlignment,
+    locationMatch,
+    cultureFlags,
+    techStackCoverage,
+    companyStageMatch
+  }
+}
+
+/**
+ * Determine shouldApply recommendation based on all factors
+ */
+export function determineShouldApply(
+  fitScore: FitScore,
+  criteriaMatch: CriteriaMatch | undefined
+): ShouldApply {
+  // Base score from fit analysis
+  const baseScore = fitScore.composite
+
+  if (!criteriaMatch) {
+    // No criteria provided - use fit score alone
+    if (baseScore >= 80) return 'DEFINITELY'
+    if (baseScore >= 65) return 'LIKELY'
+    if (baseScore >= 50) return 'MAYBE'
+    if (baseScore >= 35) return 'PROBABLY_NOT'
+    return 'NO'
+  }
+
+  // With criteria, we need to consider multiple factors
+  let score = baseScore
+  const negatives: string[] = []
+
+  // Salary is critical
+  if (criteriaMatch.salaryAlignment === 'below') {
+    score -= 30
+    negatives.push('salary')
+  } else if (criteriaMatch.salaryAlignment === 'above') {
+    score += 10
+  }
+
+  // Location mismatch is often a dealbreaker
+  if (!criteriaMatch.locationMatch) {
+    score -= 40
+    negatives.push('location')
+  }
+
+  // Red flags are concerning
+  if (criteriaMatch.cultureFlags.red.length > 0) {
+    score -= criteriaMatch.cultureFlags.red.length * 10
+    negatives.push('culture')
+  }
+
+  // Green flags are positive
+  if (criteriaMatch.cultureFlags.green.length > 0) {
+    score += criteriaMatch.cultureFlags.green.length * 5
+  }
+
+  // Tech stack coverage matters
+  if (criteriaMatch.techStackCoverage < 50) {
+    score -= 20
+    negatives.push('tech stack')
+  } else if (criteriaMatch.techStackCoverage >= 80) {
+    score += 10
+  }
+
+  // Company stage mismatch
+  if (!criteriaMatch.companyStageMatch) {
+    score -= 15
+    negatives.push('company stage')
+  }
+
+  // Clamp score
+  score = Math.max(0, Math.min(100, score))
+
+  // Critical dealbreakers
+  if (negatives.includes('location') || (negatives.includes('salary') && criteriaMatch.salaryAlignment === 'below')) {
+    return score >= 40 ? 'PROBABLY_NOT' : 'NO'
+  }
+
+  // Final determination
+  if (score >= 80) return 'DEFINITELY'
+  if (score >= 65) return 'LIKELY'
+  if (score >= 50) return 'MAYBE'
+  if (score >= 35) return 'PROBABLY_NOT'
+  return 'NO'
+}
+
+/**
+ * Generate detailed reasoning for the recommendation
+ */
+export function generateDetailedReasoning(
+  fitScore: FitScore,
+  matchAnalysis: MatchAnalysis,
+  criteriaMatch: CriteriaMatch | undefined,
+  shouldApply: ShouldApply
+): string[] {
+  const reasoning: string[] = []
+
+  // Overall fit
+  reasoning.push(`Overall skill match: ${matchAnalysis.overallMatch}% (${fitScore.recommendation})`)
+
+  // Skill details
+  if (matchAnalysis.strongMatches.length > 0) {
+    reasoning.push(`Strong matches: ${matchAnalysis.strongMatches.slice(0, 5).join(', ')}`)
+  }
+
+  if (matchAnalysis.gaps.length > 0) {
+    reasoning.push(`Skill gaps to address: ${matchAnalysis.gaps.slice(0, 3).join(', ')}`)
+  }
+
+  // Criteria-specific reasoning
+  if (criteriaMatch) {
+    // Salary
+    switch (criteriaMatch.salaryAlignment) {
+      case 'above':
+        reasoning.push('Salary: Above your target - great compensation match')
+        break
+      case 'within':
+        reasoning.push('Salary: Within your acceptable range')
+        break
+      case 'below':
+        reasoning.push('Salary: Below your minimum floor - may not meet compensation needs')
+        break
+      case 'unknown':
+        reasoning.push('Salary: Not disclosed - recommend clarifying early in process')
+        break
+    }
+
+    // Location
+    if (criteriaMatch.locationMatch) {
+      reasoning.push('Location: Matches your preferences')
+    } else {
+      reasoning.push('Location: Does not match your requirements')
+    }
+
+    // Culture
+    if (criteriaMatch.cultureFlags.green.length > 0) {
+      reasoning.push(`Culture positives: ${criteriaMatch.cultureFlags.green.length} indicators found`)
+    }
+    if (criteriaMatch.cultureFlags.red.length > 0) {
+      reasoning.push(`Culture concerns: ${criteriaMatch.cultureFlags.red.join('; ')}`)
+    }
+
+    // Tech stack
+    reasoning.push(`Tech stack coverage: ${criteriaMatch.techStackCoverage}% of your must-have technologies`)
+
+    // Company stage
+    if (criteriaMatch.companyStageMatch) {
+      reasoning.push('Company stage: Matches your preference')
+    } else {
+      reasoning.push('Company stage: May not match your preference')
+    }
+  }
+
+  // Final recommendation
+  const recommendationText: Record<ShouldApply, string> = {
+    'DEFINITELY': 'Strong recommendation to apply - this role aligns well with your criteria',
+    'LIKELY': 'Worth applying - good overall fit with minor considerations',
+    'MAYBE': 'Consider carefully - mixed signals on fit',
+    'PROBABLY_NOT': 'Significant concerns - may not be the best match',
+    'NO': 'Not recommended - key criteria not met'
+  }
+  reasoning.push(recommendationText[shouldApply])
+
+  return reasoning
 }
 
 export { analyzeJob, generateMaterials }

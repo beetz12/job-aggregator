@@ -46,34 +46,34 @@ export const handler: Handlers['CreateProfile'] = async (req, { state, emit, log
       existingProfile = await state.get<Profile>('profiles', validatedInput.id)
     }
 
-    const profileId = validatedInput.id || randomUUID()
+    const profile_id = validatedInput.id || randomUUID()
 
     const profile: Profile = {
-      id: profileId,
+      id: profile_id,
       name: validatedInput.name,
       email: validatedInput.email,
       skills: validatedInput.skills,
-      experienceYears: validatedInput.experienceYears,
-      seniorityLevel: validatedInput.seniorityLevel,
-      preferredLocations: validatedInput.preferredLocations,
-      remotePreference: validatedInput.remotePreference,
-      salaryExpectation: validatedInput.salaryExpectation,
-      createdAt: existingProfile?.createdAt || now,
-      updatedAt: now
+      experience_years: validatedInput.experience_years,
+      seniority_level: validatedInput.seniority_level,
+      preferred_locations: validatedInput.preferred_locations,
+      remote_preference: validatedInput.remote_preference,
+      salary_expectation: validatedInput.salary_expectation,
+      created_at: existingProfile?.created_at || now,
+      updated_at: now
     }
 
     // Store profile in state
-    await state.set('profiles', profileId, profile)
+    await state.set('profiles', profile_id, profile)
 
-    logger.info('Profile saved', { profileId, isUpdate: !!existingProfile })
+    logger.info('Profile saved', { profile_id, isUpdate: !!existingProfile })
 
     // Emit event for match score calculation
     await emit({
       topic: 'profile-updated',
-      data: { profileId }
+      data: { profile_id }
     })
 
-    logger.info('Emitted profile-updated event', { profileId })
+    logger.info('Emitted profile-updated event', { profile_id })
 
     return {
       status: existingProfile ? 200 : 201,

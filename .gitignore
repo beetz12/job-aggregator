@@ -35,6 +35,15 @@ __pycache__
 *.swp
 *.swo
 
+# Claude Code (user-specific settings)
+.claude/settings.json
+
+# Playwright MCP (generated screenshots)
+.playwright-mcp/
+
+# Temporary scripts
+kill3000
+
 # OS
 .DS_Store
 Thumbs.db

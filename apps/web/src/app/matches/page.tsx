@@ -55,24 +55,29 @@ function MatchedJobCard({
   isSaving: boolean
   isCheckingFit: boolean
 }) {
-  const { job, matchScore } = match
-  const timeAgo = getTimeAgo(job.postedAt)
-  const score = matchScore.totalScore
+  const { job, match_score } = match
+  const timeAgo = getTimeAgo(job.posted_at)
 
-  // Generate match reasons from breakdown
+  // Defensive null check for match_score
+  if (!match_score || !match_score.breakdown) {
+    return null
+  }
+
+  const score = match_score.total_score
+
   const matchReasons: string[] = []
-  if (matchScore.breakdown.skillScore > 30) {
+  if (match_score.breakdown.skill_score > 30) {
     matchReasons.push('Strong skill match')
-  } else if (matchScore.breakdown.skillScore > 15) {
+  } else if (match_score.breakdown.skill_score > 15) {
     matchReasons.push('Partial skill match')
   }
-  if (matchScore.breakdown.seniorityScore > 15) {
+  if (match_score.breakdown.seniority_score > 15) {
     matchReasons.push('Seniority aligned')
   }
-  if (matchScore.breakdown.locationScore > 10) {
+  if (match_score.breakdown.location_score > 10) {
     matchReasons.push('Location fit')
   }
-  if (matchScore.breakdown.salaryScore > 10) {
+  if (match_score.breakdown.salary_score > 10) {
     matchReasons.push('Salary range match')
   }
 
@@ -276,10 +281,10 @@ export default function MatchesPage() {
 
     setSavingJobId(job.id)
     try {
-      // Pass required fields: jobId, jobTitle, company (no profileId needed)
+      // Pass required fields: job_id, job_title, company (no profile_id needed)
       await createApplication.mutateAsync({
-        jobId: job.id,
-        jobTitle: job.title,
+        job_id: job.id,
+        job_title: job.title,
         company: job.company,
         status: 'saved',
       })
@@ -305,8 +310,8 @@ export default function MatchesPage() {
 
     try {
       const result = await checkFitMutation.mutateAsync({
-        jobId: job.id,
-        profileId: profile.id,
+        job_id: job.id,
+        profile_id: profile.id,
       })
       setFitAnalysis(result)
     } catch (error) {
@@ -324,8 +329,8 @@ export default function MatchesPage() {
 
     try {
       const result = await generateApplicationMutation.mutateAsync({
-        jobId: selectedJob.id,
-        profileId: profile.id,
+        job_id: selectedJob.id,
+        profile_id: profile.id,
       })
       setApplicationKit(result)
       showToast('success', 'Application materials generated!')

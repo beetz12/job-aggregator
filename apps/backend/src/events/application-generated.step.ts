@@ -44,7 +44,7 @@ export const handler: Handlers['ApplicationGenerated'] = async (input, { state, 
       jobId,
       applicationKit,
       matchReport,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       status: 'generated' as const
     }
 
@@ -72,7 +72,7 @@ export const handler: Handlers['ApplicationGenerated'] = async (input, { state, 
         type: 'resume',
         content: applicationKit.resume.markdown,
         format: 'markdown',
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       })
     }
 
@@ -92,7 +92,7 @@ export const handler: Handlers['ApplicationGenerated'] = async (input, { state, 
         type: 'cover_letter',
         content: applicationKit.coverLetter.markdown,
         format: 'markdown',
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       })
     }
 
@@ -103,7 +103,7 @@ export const handler: Handlers['ApplicationGenerated'] = async (input, { state, 
         type: 'question_answers',
         content: JSON.stringify(applicationKit.questionAnswers, null, 2),
         format: 'json',
-        createdAt: new Date().toISOString()
+        created_at: new Date().toISOString()
       })
 
       documents.push({

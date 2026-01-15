@@ -80,7 +80,7 @@ export default function SourceStatus({ sources, isLoading }: SourceStatusProps) 
           <div
             key={source.name}
             className={`bg-gray-700/50 rounded-lg p-3 flex items-center justify-between ${
-              !source.isActive ? 'opacity-60' : ''
+              !source.is_active ? 'opacity-60' : ''
             }`}
           >
             <Link
@@ -90,22 +90,22 @@ export default function SourceStatus({ sources, isLoading }: SourceStatusProps) 
               <div className={`w-2 h-2 rounded-full ${statusColors[source.status]} mr-3`}></div>
               <div>
                 <div className="text-white font-medium flex items-center gap-2">
-                  {source.displayName || source.name}
-                  {!source.isActive && (
+                  {source.display_name || source.name}
+                  {!source.is_active && (
                     <span className="text-xs text-gray-500">(legacy)</span>
                   )}
                 </div>
                 <div className="text-gray-400 text-xs">
-                  {source.jobCount} jobs
-                  {source.lastFetch && (
+                  {source.job_count} jobs
+                  {source.last_fetch && (
                     <span className="ml-2">
-                      - {new Date(source.lastFetch).toLocaleTimeString()}
+                      - {new Date(source.last_fetch).toLocaleTimeString()}
                     </span>
                   )}
                 </div>
               </div>
             </Link>
-            {source.isActive && (
+            {source.is_active && (
               <button
                 onClick={(e) => {
                   e.preventDefault()

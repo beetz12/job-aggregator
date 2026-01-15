@@ -1,0 +1,10 @@
+1. user visits job search page and see all jobs. The user will have a series of filter options to filter the jobs (keywords, titles, roles, companies, location, remote / contract, etc)
+2. user can click on a job to see details or click on the job to select it and toggle the checkmark
+3. Of the selected jobs, user can click on "check fit" or "apply", or "save to favorite". 
+4. check fit will check the user's fit for each job and show the result on the /matches page. 
+5. apply will show a confirmation prompt asking the user if he wants to generate custom resumes for the selected jobs (if a resume is already uploaded). Otherwise, it will ask the user to upload a resume before he can begin. 
+6. if the user confirms to generate custom resume, the user will be taken to the /applied page where he can see all of the jobs he is applying to and the custom resume that were generated. We should show the resume in our markdown viewer and allow the user to make edits to it. 
+7. If all the resumes look good, then the user can click on the apply button which will trigger claude computer use to programatically navigate to each job page and apply to the job using the resume. If there are any additional info needed from the user such as login, captcha bypass, additional questions that our agent has answered, and right before submission, we need to prompt the user (human in the loop) to provide review and confirmation to continue. 
+8. Before the job has been applied (but after custom resumes have been generated), users will see "custom resume ready" as the status of the job cards on the /applied page. But after a job has been successfully applied, the status will change to "applied". 
+9. Once the user clicks on an applied job, he'll be able to see the full details of what was submitted, including the custom resume, as well as any additional questions that were answered and the URL where the job submission was made. 
+10. Please add any additional requirements and features required to make this into a fully functional production-ready SAAS. 

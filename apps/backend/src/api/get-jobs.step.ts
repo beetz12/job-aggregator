@@ -8,7 +8,7 @@ const responseSchema = z.object({
   jobs: z.array(jobSchema),
   total: z.number(),
   sources: z.array(z.string()),
-  lastUpdated: z.string()
+  last_updated: z.string()
 })
 
 export const config: ApiRouteConfig = {
@@ -24,7 +24,13 @@ export const config: ApiRouteConfig = {
     { name: 'source', description: 'Filter by source (arbeitnow, hackernews, reddit)' },
     { name: 'remote', description: 'Filter remote jobs only (true/false)' },
     { name: 'limit', description: 'Number of results (default: 50)' },
-    { name: 'offset', description: 'Pagination offset (default: 0)' }
+    { name: 'offset', description: 'Pagination offset (default: 0)' },
+    { name: 'tags', description: 'Comma-separated list of tags to filter by' },
+    { name: 'salaryMin', description: 'Minimum yearly salary (normalized)' },
+    { name: 'salaryMax', description: 'Maximum yearly salary (normalized)' },
+    { name: 'locations', description: 'Comma-separated list of locations to filter by' },
+    { name: 'employmentTypes', description: 'Comma-separated list of employment types (full-time, part-time, contract, internship)' },
+    { name: 'experienceLevels', description: 'Comma-separated list of experience levels (entry, mid, senior, lead, executive)' }
   ],
   responseSchema: {
     200: responseSchema
@@ -32,9 +38,21 @@ export const config: ApiRouteConfig = {
 }
 
 export const handler: Handlers['GetJobs'] = async (req, { state, logger }) => {
-  const { search, source, remote, limit = '50', offset = '0' } = req.queryParams as Record<string, string>
+  const {
+    search,
+    source,
+    remote,
+    limit = '50',
+    offset = '0',
+    tags,
+    salaryMin,
+    salaryMax,
+    locations,
+    employmentTypes,
+    experienceLevels
+  } = req.queryParams as Record<string, string>
 
-  logger.info('Fetching jobs', { search, source, remote, limit, offset })
+  logger.info('Fetching jobs', { search, source, remote, limit, offset, tags, salaryMin, salaryMax, locations, employmentTypes, experienceLevels })
 
   // Get jobs from Motia state (hot cache)
   let jobs = await state.getGroup<Job>('jobs')
@@ -88,8 +106,84 @@ export const handler: Handlers['GetJobs'] = async (req, { state, logger }) => {
     jobs = jobs.filter(j => j.remote === true)
   }
 
-  // Sort by freshness (healthScore descending)
-  jobs.sort((a, b) => b.healthScore - a.healthScore)
+  // Apply tags filter (match any tag in the job's tags or skills)
+  if (tags) {
+    const tagList = tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+    if (tagList.length > 0) {
+      jobs = jobs.filter(j => {
+        const jobTags = [...(j.tags || []), ...(j.skills || [])].map(t => t.toLowerCase())
+        // Also search in title and description for tags
+        const titleLower = j.title.toLowerCase()
+        const descLower = j.description.toLowerCase()
+        return tagList.some(tag =>
+          jobTags.some(jt => jt.includes(tag)) ||
+          titleLower.includes(tag) ||
+          descLower.includes(tag)
+        )
+      })
+    }
+  }
+
+  // Apply salary filter (using normalized yearly salary)
+  if (salaryMin || salaryMax) {
+    const minSalary = salaryMin ? parseInt(salaryMin) : 0
+    const maxSalary = salaryMax ? parseInt(salaryMax) : Infinity
+
+    jobs = jobs.filter(j => {
+      if (!j.salary?.normalized_yearly) return false
+      const jobMin = j.salary.normalized_yearly.min || 0
+      const jobMax = j.salary.normalized_yearly.max || jobMin
+
+      // Job salary range overlaps with filter range
+      return jobMax >= minSalary && jobMin <= maxSalary
+    })
+  }
+
+  // Apply locations filter
+  if (locations) {
+    const locationList = locations.split(',').map(l => l.trim().toLowerCase()).filter(Boolean)
+    if (locationList.length > 0) {
+      jobs = jobs.filter(j => {
+        if (!j.location) return false
+        const jobLocation = j.location.toLowerCase()
+        const parsedCity = j.location_parsed?.city?.toLowerCase() || ''
+        const parsedState = j.location_parsed?.state?.toLowerCase() || ''
+        const parsedCountry = j.location_parsed?.country?.toLowerCase() || ''
+
+        return locationList.some(loc =>
+          jobLocation.includes(loc) ||
+          parsedCity.includes(loc) ||
+          parsedState.includes(loc) ||
+          parsedCountry.includes(loc)
+        )
+      })
+    }
+  }
+
+  // Apply employment types filter
+  if (employmentTypes) {
+    const typeList = employmentTypes.split(',').map(t => t.trim().toLowerCase()).filter(Boolean)
+    if (typeList.length > 0) {
+      jobs = jobs.filter(j => {
+        if (!j.employment_type) return false
+        return typeList.includes(j.employment_type.toLowerCase())
+      })
+    }
+  }
+
+  // Apply experience levels filter
+  if (experienceLevels) {
+    const levelList = experienceLevels.split(',').map(l => l.trim().toLowerCase()).filter(Boolean)
+    if (levelList.length > 0) {
+      jobs = jobs.filter(j => {
+        if (!j.experience_level) return false
+        return levelList.includes(j.experience_level.toLowerCase())
+      })
+    }
+  }
+
+  // Sort by freshness (health_score descending)
+  jobs.sort((a, b) => b.health_score - a.health_score)
 
   // Paginate
   const start = parseInt(offset)
@@ -105,7 +199,7 @@ export const handler: Handlers['GetJobs'] = async (req, { state, logger }) => {
       jobs: paginatedJobs,
       total: jobs.length,
       sources: [...new Set(jobs.map(j => j.source))],
-      lastUpdated: new Date().toISOString()
+      last_updated: new Date().toISOString()
     }
   }
 }

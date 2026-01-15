@@ -82,7 +82,7 @@ export function useMatchedJobs(profileId: string) {
 
 export function useGenerateCoverLetter() {
   return useMutation({
-    mutationFn: ({ jobId, profileId }: { jobId: string; profileId: string }) =>
-      generateCoverLetter(jobId, profileId),
+    mutationFn: ({ job_id, profile_id }: { job_id: string; profile_id: string }) =>
+      generateCoverLetter(job_id, profile_id),
   })
 }

@@ -47,19 +47,19 @@ function mapDbRowToJob(row: Record<string, unknown>): Job {
     url: row.url as string,
     description: row.description as string,
     source: row.source as Job['source'],
-    postedAt: row.posted_at as string,
-    fetchedAt: row.fetched_at as string,
+    posted_at: row.posted_at as string,
+    fetched_at: row.fetched_at as string,
     tags: (row.tags as string[]) || [],
-    healthScore: row.health_score as number,
-    aiSummary: row.ai_summary as string | undefined,
+    health_score: row.health_score as number,
+    ai_summary: row.ai_summary as string | undefined,
     skills: (row.skills as string[]) || [],
-    sourceId: row.source_id as string | undefined,
-    companyUrl: row.company_url as string | undefined,
-    locationParsed: row.location_parsed as Job['locationParsed'],
+    source_id: row.source_id as string | undefined,
+    company_url: row.company_url as string | undefined,
+    location_parsed: row.location_parsed as Job['location_parsed'],
     salary: row.salary as Job['salary'],
-    employmentType: row.employment_type as string | undefined,
-    experienceLevel: row.experience_level as string | undefined,
-    contentHash: row.content_hash as string | undefined,
+    employment_type: row.employment_type as string | undefined,
+    experience_level: row.experience_level as string | undefined,
+    content_hash: row.content_hash as string | undefined,
   }
 }
 
@@ -88,7 +88,7 @@ export async function upsertJob(job: Job): Promise<{
 
     if (existing.length > 0) {
       // Update existing job (refresh freshness, keep higher health score)
-      const newHealthScore = Math.max(existing[0].health_score, job.healthScore)
+      const newHealthScore = Math.max(existing[0].health_score, job.health_score)
       const { rows } = await query<Record<string, unknown>>(
         `UPDATE jobs SET
           fetched_at = $1,
@@ -123,21 +123,21 @@ export async function upsertJob(job: Job): Promise<{
         job.url,
         job.description,
         job.source,
-        job.postedAt,
-        job.fetchedAt,
+        job.posted_at,
+        job.fetched_at,
         job.tags,
-        job.healthScore,
+        job.health_score,
         contentHash,
         normalizeText(job.title),
         normalizeText(job.company),
-        job.aiSummary || null,
+        job.ai_summary || null,
         job.skills || [],
-        job.sourceId || null,
-        job.companyUrl || null,
-        job.locationParsed ? JSON.stringify(job.locationParsed) : null,
+        job.source_id || null,
+        job.company_url || null,
+        job.location_parsed ? JSON.stringify(job.location_parsed) : null,
         job.salary ? JSON.stringify(job.salary) : null,
-        job.employmentType || null,
-        job.experienceLevel || null
+        job.employment_type || null,
+        job.experience_level || null
       ]
     )
 
@@ -310,8 +310,8 @@ export async function updateSourceStatus(
 export async function getSourcesFromDB(): Promise<Array<{
   name: string
   status: string
-  lastFetch: string | null
-  jobCount: number
+  last_fetch: string | null
+  job_count: number
   error: string | null
 }>> {
   if (!isSupabaseConfigured()) return []
@@ -328,8 +328,8 @@ export async function getSourcesFromDB(): Promise<Array<{
     return rows.map(s => ({
       name: s.name,
       status: s.status,
-      lastFetch: s.last_fetch,
-      jobCount: s.job_count || 0,
+      last_fetch: s.last_fetch,
+      job_count: s.job_count || 0,
       error: s.error
     }))
   } catch (error) {

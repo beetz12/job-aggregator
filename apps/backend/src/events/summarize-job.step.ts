@@ -41,7 +41,7 @@ Respond with a JSON object containing:
 4. "redFlags": Array of 0-3 potential concerns (e.g., "On-site only", "Unpaid trial", "Vague compensation")
 5. "salaryRange": Salary range if mentioned, or null
 6. "remotePolicy": One of "remote", "hybrid", "onsite", or "unknown"
-7. "seniorityLevel": One of "junior", "mid", "senior", "lead", or "unknown"
+7. "seniority_level": One of "junior", "mid", "senior", "lead", or "unknown"
 
 Return ONLY valid JSON, no markdown or explanation.`
 }
@@ -77,8 +77,8 @@ function parseAIResponse(
     remotePolicy: ['remote', 'hybrid', 'onsite', 'unknown'].includes(parsed.remotePolicy)
       ? parsed.remotePolicy
       : 'unknown',
-    seniorityLevel: ['junior', 'mid', 'senior', 'lead', 'unknown'].includes(parsed.seniorityLevel)
-      ? parsed.seniorityLevel
+    seniority_level: ['junior', 'mid', 'senior', 'lead', 'unknown'].includes(parsed.seniority_level)
+      ? parsed.seniority_level
       : 'unknown',
     generatedAt: new Date().toISOString()
   }
@@ -102,7 +102,7 @@ function generateFallbackSummary(
     redFlags: [],
     salaryRange: undefined,
     remotePolicy: remote ? 'remote' : 'unknown',
-    seniorityLevel: title.toLowerCase().includes('senior')
+    seniority_level: title.toLowerCase().includes('senior')
       ? 'senior'
       : title.toLowerCase().includes('junior')
         ? 'junior'
@@ -162,7 +162,7 @@ export const handler: Handlers['SummarizeJob'] = async (input, { state, logger }
       oneLiner: summary.oneLiner,
       requirementsCount: summary.keyRequirements.length,
       redFlagsCount: summary.redFlags.length,
-      seniorityLevel: summary.seniorityLevel,
+      seniority_level: summary.seniority_level,
       remotePolicy: summary.remotePolicy
     })
   } catch (error) {

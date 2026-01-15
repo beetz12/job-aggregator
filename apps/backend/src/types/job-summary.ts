@@ -9,8 +9,8 @@ export type RemotePolicy = z.infer<typeof remotePolicySchema>
 /**
  * Seniority level classification
  */
-export const seniorityLevelSchema = z.enum(['junior', 'mid', 'senior', 'lead', 'unknown'])
-export type SeniorityLevel = z.infer<typeof seniorityLevelSchema>
+export const seniority_levelSchema = z.enum(['junior', 'mid', 'senior', 'lead', 'unknown'])
+export type SeniorityLevel = z.infer<typeof seniority_levelSchema>
 
 /**
  * AI-generated job summary schema
@@ -39,7 +39,7 @@ export const jobSummarySchema = z.object({
   remotePolicy: remotePolicySchema,
 
   /** Inferred seniority level */
-  seniorityLevel: seniorityLevelSchema,
+  seniority_level: seniority_levelSchema,
 
   /** Timestamp when summary was generated */
   generatedAt: z.string()

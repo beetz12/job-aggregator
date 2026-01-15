@@ -121,7 +121,7 @@ that the front-end, back-end, and database are all properly set up and can work 
 
 # update skill
 
-Please find the appropriate claude code skill in '/Users/dave/Work/concierge-ai/.claude/skills'  or create a new skill Following our existing skill patterns to include the insights and discovery we just gained - to ensuer that future agents will be able to quickly and properly diagnose and fix this issue.
+Please find the appropriate claude code skill in '.claude/skills'  or create a new skill Following our existing skill patterns to include the insights and discovery we just gained - to ensuer that future agents will be able to quickly and properly diagnose and fix this issue.
 
 Perfect. Please implement this using the nextjs expert agent for frontend and
 nodejs agent or fast api agent for the backend - with both agents working in parallel.

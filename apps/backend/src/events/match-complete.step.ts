@@ -91,7 +91,7 @@ export const handler: Handlers['MatchComplete'] = async (input, { state, emit, l
       type: 'match-complete',
       subject: emailSubject,
       matchCount: strongMatches.length,
-      createdAt: new Date().toISOString(),
+      created_at: new Date().toISOString(),
       status: 'logged' // Would be 'sent' in production
     })
 

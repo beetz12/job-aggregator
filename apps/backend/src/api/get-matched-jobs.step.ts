@@ -11,7 +11,7 @@ const matchedJobSchema = z.object({
 const responseSchema = z.object({
   matches: z.array(matchedJobSchema),
   total: z.number(),
-  profileId: z.string()
+  profile_id: z.string()
 })
 
 const errorResponseSchema = z.object({
@@ -42,19 +42,19 @@ interface MatchedJob {
 }
 
 export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }) => {
-  const { id: profileId } = req.pathParams
+  const { id: profile_id } = req.pathParams
   const { limit = '50', minScore = '0' } = req.queryParams as Record<string, string>
 
   const limitNum = Math.min(parseInt(limit) || 50, 100)
   const minScoreNum = parseInt(minScore) || 0
 
-  logger.info('Fetching matched jobs', { profileId, limit: limitNum, minScore: minScoreNum })
+  logger.info('Fetching matched jobs', { profile_id, limit: limitNum, minScore: minScoreNum })
 
   try {
     // Verify profile exists
-    const profile = await state.get<Profile>('profiles', profileId)
+    const profile = await state.get<Profile>('profiles', profile_id)
     if (!profile) {
-      logger.info('Profile not found', { profileId })
+      logger.info('Profile not found', { profile_id })
       return {
         status: 404,
         body: { error: 'Profile not found' }
@@ -65,18 +65,18 @@ export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }
     const allMatchScores = await state.getGroup<MatchScore>('match-scores')
 
     // Filter to only this profile's scores
-    const profileScores = allMatchScores.filter(score => score.profileId === profileId)
+    const profileScores = allMatchScores.filter(score => score.profile_id === profile_id)
 
-    logger.info('Found match scores', { profileId, scoreCount: profileScores.length })
+    logger.info('Found match scores', { profile_id, scoreCount: profileScores.length })
 
     if (profileScores.length === 0) {
-      logger.info('No match scores found for profile', { profileId })
+      logger.info('No match scores found for profile', { profile_id })
       return {
         status: 200,
         body: {
           matches: [],
           total: 0,
-          profileId
+          profile_id
         }
       }
     }
@@ -88,9 +88,9 @@ export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }
     // Join scores with jobs and filter by minimum score
     const matchedJobs: MatchedJob[] = []
     for (const score of profileScores) {
-      if (score.totalScore < minScoreNum) continue
+      if (score.total_score < minScoreNum) continue
 
-      const job = jobsMap.get(score.jobId)
+      const job = jobsMap.get(score.job_id)
       if (job) {
         matchedJobs.push({
           job,
@@ -99,18 +99,18 @@ export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }
       }
     }
 
-    // Sort by match score descending, then by job healthScore
+    // Sort by match score descending, then by job health_score
     matchedJobs.sort((a, b) => {
-      const scoreDiff = b.matchScore.totalScore - a.matchScore.totalScore
+      const scoreDiff = b.matchScore.total_score - a.matchScore.total_score
       if (scoreDiff !== 0) return scoreDiff
-      return b.job.healthScore - a.job.healthScore
+      return b.job.health_score - a.job.health_score
     })
 
     // Apply limit
     const topMatches = matchedJobs.slice(0, limitNum)
 
     logger.info('Returning matched jobs', {
-      profileId,
+      profile_id,
       totalMatches: matchedJobs.length,
       returnedMatches: topMatches.length
     })
@@ -123,12 +123,12 @@ export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }
       body: {
         matches: topMatches,
         total: matchedJobs.length,
-        profileId
+        profile_id
       }
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    logger.error('Failed to fetch matched jobs', { profileId, error: errorMessage })
+    logger.error('Failed to fetch matched jobs', { profile_id, error: errorMessage })
     return {
       status: 500,
       body: { error: 'Failed to fetch matched jobs' }

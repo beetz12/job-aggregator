@@ -35,21 +35,21 @@ export const handler: Handlers['CreateApplication'] = async (req, { state, logge
 
     const application: Application = {
       id,
-      jobId: input.jobId,
-      jobTitle: input.jobTitle,
+      job_id: input.job_id,
+      job_title: input.job_title,
       company: input.company,
       status: input.status,
-      appliedAt: input.status === 'applied' ? input.appliedAt || now : input.appliedAt,
+      applied_at: input.status === 'applied' ? input.applied_at || now : input.applied_at,
       notes: input.notes,
-      followUpDate: input.followUpDate,
-      resumeVersion: input.resumeVersion,
-      createdAt: now,
-      updatedAt: now
+      follow_up_date: input.follow_up_date,
+      resume_version: input.resume_version,
+      created_at: now,
+      updated_at: now
     }
 
     await state.set('applications', id, application)
 
-    logger.info('Application created', { id, jobId: application.jobId, company: application.company })
+    logger.info('Application created', { id, job_id: application.job_id, company: application.company })
 
     return {
       status: 201,

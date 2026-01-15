@@ -26,11 +26,11 @@ export const parsedLocationSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  countryCode: z.string().optional(),
+  country_code: z.string().optional(),
   region: z.string().optional(),
   raw: z.string().optional(),
-  isRemote: z.boolean().optional(),
-  remoteType: z.enum(['full', 'hybrid', 'flexible']).optional()
+  is_remote: z.boolean().optional(),
+  remote_type: z.enum(['full', 'hybrid', 'flexible']).optional()
 })
 
 export type ParsedLocation = z.infer<typeof parsedLocationSchema>
@@ -47,7 +47,7 @@ export const salarySchema = z.object({
   max: z.number().optional().nullable(),
   currency: z.string(),
   period: z.string(), // 'yearly', 'monthly', 'hourly', 'daily'
-  normalizedYearly: z.object({
+  normalized_yearly: z.object({
     min: z.number().optional().nullable(),
     max: z.number().optional().nullable()
   }).optional().nullable()
@@ -72,24 +72,24 @@ export const jobSchema = z.object({
   url: z.string(),
   description: z.string(),
   source: jobSourceEnum,
-  postedAt: z.string(),
-  fetchedAt: z.string(),
+  posted_at: z.string(),
+  fetched_at: z.string(),
   tags: z.array(z.string()),
-  healthScore: z.number().min(0).max(100),
+  health_score: z.number().min(0).max(100),
 
   // AI-enhanced fields (optional, populated by AI steps)
-  aiSummary: z.string().optional(),
+  ai_summary: z.string().optional(),
   skills: z.array(z.string()).optional(),
 
   // Extended fields from Python scraper integration
   // Using .nullable() to allow null/undefined values from legacy sources
-  sourceId: z.string().optional().nullable(),
-  companyUrl: z.string().optional().nullable(),
-  locationParsed: parsedLocationSchema.optional().nullable(),
+  source_id: z.string().optional().nullable(),
+  company_url: z.string().optional().nullable(),
+  location_parsed: parsedLocationSchema.optional().nullable(),
   salary: salarySchema.optional().nullable(),
-  employmentType: z.string().optional().nullable(),
-  experienceLevel: z.string().optional().nullable(),
-  contentHash: z.string().optional().nullable()
+  employment_type: z.enum(['full-time', 'part-time', 'contract', 'internship']).optional().nullable(),
+  experience_level: z.enum(['entry', 'mid', 'senior', 'lead', 'executive']).optional().nullable(),
+  content_hash: z.string().optional().nullable()
 })
 
 export type Job = z.infer<typeof jobSchema>

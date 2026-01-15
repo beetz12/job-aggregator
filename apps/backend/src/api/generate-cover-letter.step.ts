@@ -54,11 +54,11 @@ ${job.description}
 APPLICANT PROFILE:
 - Name: ${profile.name}
 - Skills: ${profile.skills.join(', ')}
-- Experience: ${profile.experienceYears} years
-- Seniority Level: ${profile.seniorityLevel}
-- Preferred Locations: ${profile.preferredLocations.join(', ')}
-- Remote Preference: ${profile.remotePreference}
-${profile.salaryExpectation ? `- Salary Expectation: ${profile.salaryExpectation.min}-${profile.salaryExpectation.max} ${profile.salaryExpectation.currency}` : ''}
+- Experience: ${profile.experience_years} years
+- Seniority Level: ${profile.seniority_level}
+- Preferred Locations: ${profile.preferred_locations.join(', ')}
+- Remote Preference: ${profile.remote_preference}
+${profile.salary_expectation ? `- Salary Expectation: ${profile.salary_expectation.min}-${profile.salary_expectation.max} ${profile.salary_expectation.currency}` : ''}
 
 TONE: ${tone}
 ${emphasisText}
@@ -117,7 +117,7 @@ function generateFallbackCoverLetter(
 
   const coverLetter = `Dear Hiring Manager,
 
-I am writing to express my interest in the ${job.title} position at ${job.company}. With ${profile.experienceYears} years of experience and expertise in ${profile.skills.slice(0, 3).join(', ')}, I believe I would be a strong addition to your team.
+I am writing to express my interest in the ${job.title} position at ${job.company}. With ${profile.experience_years} years of experience and expertise in ${profile.skills.slice(0, 3).join(', ')}, I believe I would be a strong addition to your team.
 
 ${relevantSkills.length > 0 ? `My experience with ${relevantSkills.join(', ')} aligns well with the requirements of this role.` : 'I am eager to bring my skills and experience to this position.'} I am particularly drawn to this opportunity because of ${job.company}'s reputation and the exciting challenges this role presents.
 
@@ -154,7 +154,7 @@ export const handler: Handlers['GenerateCoverLetter'] = async (req, { state, log
     throw error
   }
 
-  const { profileId, tone, emphasis } = validatedBody
+  const { profile_id, tone, emphasis } = validatedBody
 
   // Fetch job from state
   const job = await state.get<Job>('jobs', jobId)
@@ -167,9 +167,9 @@ export const handler: Handlers['GenerateCoverLetter'] = async (req, { state, log
   }
 
   // Fetch profile from state
-  const profile = await state.get<Profile>('profiles', profileId)
+  const profile = await state.get<Profile>('profiles', profile_id)
   if (!profile) {
-    logger.warn('Profile not found', { profileId })
+    logger.warn('Profile not found', { profile_id })
     return {
       status: 404,
       body: { error: 'Profile not found' }
@@ -179,7 +179,7 @@ export const handler: Handlers['GenerateCoverLetter'] = async (req, { state, log
   logger.info('Generating cover letter', {
     jobId,
     jobTitle: job.title,
-    profileId,
+    profile_id,
     profileName: profile.name,
     tone,
     emphasisCount: emphasis?.length || 0
@@ -188,7 +188,7 @@ export const handler: Handlers['GenerateCoverLetter'] = async (req, { state, log
   // Check if API key is configured
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    logger.warn('ANTHROPIC_API_KEY not configured, using fallback cover letter', { jobId, profileId })
+    logger.warn('ANTHROPIC_API_KEY not configured, using fallback cover letter', { jobId, profile_id })
     const fallbackResponse = generateFallbackCoverLetter(job, profile)
     return {
       status: 200,
@@ -201,7 +201,7 @@ export const handler: Handlers['GenerateCoverLetter'] = async (req, { state, log
 
     const prompt = buildCoverLetterPrompt(job, profile, tone, emphasis)
 
-    logger.debug('Calling Claude API', { jobId, profileId, promptLength: prompt.length })
+    logger.debug('Calling Claude API', { jobId, profile_id, promptLength: prompt.length })
 
     const message = await anthropic.messages.create({
       model: 'claude-sonnet-4-20250514',
@@ -224,7 +224,7 @@ export const handler: Handlers['GenerateCoverLetter'] = async (req, { state, log
 
     logger.info('Cover letter generated successfully', {
       jobId,
-      profileId,
+      profile_id,
       highlightedSkillsCount: coverLetterResponse.highlightedSkills.length,
       matchedRequirementsCount: coverLetterResponse.matchedRequirements.length
     })
@@ -235,10 +235,10 @@ export const handler: Handlers['GenerateCoverLetter'] = async (req, { state, log
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    logger.error('Failed to generate cover letter', { jobId, profileId, error: errorMessage })
+    logger.error('Failed to generate cover letter', { jobId, profile_id, error: errorMessage })
 
     // Return fallback cover letter instead of error
-    logger.info('Using fallback cover letter after error', { jobId, profileId })
+    logger.info('Using fallback cover letter after error', { jobId, profile_id })
     const fallbackResponse = generateFallbackCoverLetter(job, profile)
     return {
       status: 200,

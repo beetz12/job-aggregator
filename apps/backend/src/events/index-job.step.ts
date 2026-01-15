@@ -101,9 +101,9 @@ export const handler: Handlers['IndexJob'] = async (input, { state, streams, log
 
     if (existingJob) {
       const keepExisting =
-        existingJob.healthScore > job.healthScore ||
-        (existingJob.healthScore === job.healthScore &&
-         new Date(existingJob.postedAt) > new Date(job.postedAt))
+        existingJob.health_score > job.health_score ||
+        (existingJob.health_score === job.health_score &&
+         new Date(existingJob.posted_at) > new Date(job.posted_at))
 
       if (keepExisting) {
         logger.info('Duplicate job found via hash cache, keeping existing', {
@@ -154,9 +154,9 @@ export const handler: Handlers['IndexJob'] = async (input, { state, streams, log
 
     if (existingDuplicate) {
       const keepExisting =
-        existingDuplicate.healthScore > job.healthScore ||
-        (existingDuplicate.healthScore === job.healthScore &&
-         new Date(existingDuplicate.postedAt) > new Date(job.postedAt))
+        existingDuplicate.health_score > job.health_score ||
+        (existingDuplicate.health_score === job.health_score &&
+         new Date(existingDuplicate.posted_at) > new Date(job.posted_at))
 
       if (keepExisting) {
         logger.info('Duplicate job in state (exact match), keeping existing', {
@@ -215,9 +215,9 @@ export const handler: Handlers['IndexJob'] = async (input, { state, streams, log
 
           // Decide whether to keep existing or replace with new
           const keepExisting =
-            fuzzyMatch.healthScore > job.healthScore ||
-            (fuzzyMatch.healthScore === job.healthScore &&
-             new Date(fuzzyMatch.postedAt) > new Date(job.postedAt))
+            fuzzyMatch.health_score > job.health_score ||
+            (fuzzyMatch.health_score === job.health_score &&
+             new Date(fuzzyMatch.posted_at) > new Date(job.posted_at))
 
           if (keepExisting) {
             logger.info('Fuzzy duplicate: keeping existing job', {

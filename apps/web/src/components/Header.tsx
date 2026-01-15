@@ -11,6 +11,7 @@ export default function Header() {
     { href: '/jobs', label: 'Jobs' },
     { href: '/matches', label: 'Matches' },
     { href: '/applications', label: 'Applications' },
+    { href: '/career-advisor', label: 'Career Advisor' },
     { href: '/sources', label: 'Sources' },
     { href: '/profile', label: 'Profile' },
   ]
@@ -20,8 +21,8 @@ export default function Header() {
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center space-x-4">
-            <Link href="/" className="text-xl font-bold text-white">
-              Job Aggregator
+            <Link href="/" className="text-xl font-bold text-white flex items-center gap-2">
+              <span>Career Compass</span>
             </Link>
             <span className="text-xs bg-blue-600 text-white px-2 py-1 rounded">
               Powered by Motia

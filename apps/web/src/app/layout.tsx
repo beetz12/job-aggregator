@@ -9,8 +9,8 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'Job Aggregator - Powered by Motia',
-  description: 'Real-time job aggregation from multiple sources',
+  title: 'Career Compass - AI Job Search Consultant',
+  description: 'AI-powered career guidance with intelligent job matching and personalized recommendations',
 }
 
 export default function RootLayout({

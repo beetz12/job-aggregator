@@ -8,6 +8,7 @@ import { useJob } from '@/hooks/useJobs'
 import { useMyProfile, useGenerateCoverLetter } from '@/hooks/useProfile'
 import { useCreateApplication } from '@/hooks/useApplications'
 import { SOURCE_COLORS } from '@/lib/types'
+import { formatJobDescription } from '@/lib/descriptionFormatter'
 
 export default function JobDetailsPage() {
   const params = useParams()
@@ -41,8 +42,8 @@ export default function JobDetailsPage() {
     setIsSaving(true)
     try {
       await createApplication.mutateAsync({
-        jobId: id,
-        jobTitle: job.title,
+        job_id: id,
+        job_title: job.title,
         company: job.company,
         status: 'saved',
       })
@@ -66,10 +67,10 @@ export default function JobDetailsPage() {
 
     try {
       const result = await generateCoverLetter.mutateAsync({
-        jobId: id,
-        profileId: profile.id,
+        job_id: id,
+        profile_id: profile.id,
       })
-      setCoverLetter(result.coverLetter)
+      setCoverLetter(result.cover_letter)
       setShowCoverLetter(true)
       showToast('success', 'Cover letter generated!')
     } catch (error) {
@@ -151,7 +152,7 @@ export default function JobDetailsPage() {
     return null
   }
 
-  const timeAgo = getTimeAgo(job.postedAt)
+  const timeAgo = getTimeAgo(job.posted_at)
 
   return (
     <div className="min-h-screen bg-gray-900 p-6">
@@ -272,19 +273,19 @@ export default function JobDetailsPage() {
               <div className="flex-1 max-w-md h-4 bg-gray-700 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-all ${
-                    job.healthScore >= 75
+                    job.health_score >= 75
                       ? 'bg-green-500'
-                      : job.healthScore >= 50
+                      : job.health_score >= 50
                       ? 'bg-yellow-500'
-                      : job.healthScore >= 25
+                      : job.health_score >= 25
                       ? 'bg-orange-500'
                       : 'bg-red-500'
                   }`}
-                  style={{ width: `${job.healthScore}%` }}
+                  style={{ width: `${job.health_score}%` }}
                 />
               </div>
               <span className="text-lg font-semibold text-white ml-4">
-                {job.healthScore}%
+                {job.health_score}%
               </span>
             </div>
             <p className="text-sm text-gray-500 mt-2">
@@ -314,7 +315,7 @@ export default function JobDetailsPage() {
               prose-blockquote:border-l-4 prose-blockquote:border-gray-600 prose-blockquote:pl-4 prose-blockquote:italic prose-blockquote:text-gray-400
               prose-hr:border-gray-700"
             >
-              <ReactMarkdown>{job.description}</ReactMarkdown>
+              <ReactMarkdown>{formatJobDescription(job.description)}</ReactMarkdown>
             </div>
           </div>
 

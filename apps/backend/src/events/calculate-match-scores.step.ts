@@ -4,7 +4,7 @@ import type { Profile, MatchScore } from '../types/profile'
 import type { Job } from '../types/job'
 
 const inputSchema = z.object({
-  profileId: z.string()
+  profile_id: z.string()
 })
 
 export const config: EventConfig = {
@@ -68,7 +68,7 @@ function calculateSeniorityScore(profile: Profile, job: Job): number {
 
   // Score based on match
   const levelOrder = ['junior', 'mid', 'senior', 'lead'] as const
-  const profileIndex = levelOrder.indexOf(profile.seniorityLevel)
+  const profileIndex = levelOrder.indexOf(profile.seniority_level)
   const jobIndex = levelOrder.indexOf(jobLevel)
 
   // Perfect match = 20 points, 1 level off = 15 points, 2 levels = 10 points, 3 levels = 5 points
@@ -82,17 +82,17 @@ function calculateSeniorityScore(profile: Profile, job: Job): number {
  */
 function calculateLocationScore(profile: Profile, job: Job): number {
   // Remote preference matching
-  if (profile.remotePreference === 'remote-only') {
+  if (profile.remote_preference === 'remote-only') {
     return job.remote ? 15 : 0
   }
 
-  if (profile.remotePreference === 'onsite') {
+  if (profile.remote_preference === 'onsite') {
     // Prefer non-remote jobs or jobs with matching location
     if (!job.remote) {
       // Check location match
-      if (job.location && profile.preferredLocations.length > 0) {
+      if (job.location && profile.preferred_locations.length > 0) {
         const jobLocLower = job.location.toLowerCase()
-        const hasMatch = profile.preferredLocations.some(loc =>
+        const hasMatch = profile.preferred_locations.some(loc =>
           jobLocLower.includes(loc.toLowerCase()) || loc.toLowerCase().includes(jobLocLower)
         )
         return hasMatch ? 15 : 5
@@ -102,12 +102,12 @@ function calculateLocationScore(profile: Profile, job: Job): number {
     return 0
   }
 
-  if (profile.remotePreference === 'hybrid') {
+  if (profile.remote_preference === 'hybrid') {
     // Moderate preference - any job is somewhat acceptable
     if (job.remote) return 10
-    if (job.location && profile.preferredLocations.length > 0) {
+    if (job.location && profile.preferred_locations.length > 0) {
       const jobLocLower = job.location.toLowerCase()
-      const hasMatch = profile.preferredLocations.some(loc =>
+      const hasMatch = profile.preferred_locations.some(loc =>
         jobLocLower.includes(loc.toLowerCase()) || loc.toLowerCase().includes(jobLocLower)
       )
       return hasMatch ? 15 : 8
@@ -117,9 +117,9 @@ function calculateLocationScore(profile: Profile, job: Job): number {
 
   // Flexible - all jobs score well
   if (job.remote) return 12
-  if (job.location && profile.preferredLocations.length > 0) {
+  if (job.location && profile.preferred_locations.length > 0) {
     const jobLocLower = job.location.toLowerCase()
-    const hasMatch = profile.preferredLocations.some(loc =>
+    const hasMatch = profile.preferred_locations.some(loc =>
       jobLocLower.includes(loc.toLowerCase()) || loc.toLowerCase().includes(jobLocLower)
     )
     return hasMatch ? 15 : 10
@@ -133,12 +133,12 @@ function calculateLocationScore(profile: Profile, job: Job): number {
  */
 function calculateSalaryScore(profile: Profile, _job: Job): number {
   // If user has no salary expectation, give full points
-  if (!profile.salaryExpectation) {
+  if (!profile.salary_expectation) {
     return 15
   }
 
   // Since our job schema doesn't include salary, give partial points
-  // In a real implementation, you'd compare job.salary with profile.salaryExpectation
+  // In a real implementation, you'd compare job.salary with profile.salary_expectation
   return 10
 }
 
@@ -146,46 +146,46 @@ function calculateSalaryScore(profile: Profile, _job: Job): number {
  * Calculate total match score for a job-profile pair
  */
 function calculateMatchScore(profile: Profile, job: Job): MatchScore {
-  const skillScore = calculateSkillScore(profile, job)
-  const seniorityScore = calculateSeniorityScore(profile, job)
-  const locationScore = calculateLocationScore(profile, job)
-  const salaryScore = calculateSalaryScore(profile, job)
+  const skill_score = calculateSkillScore(profile, job)
+  const seniority_score = calculateSeniorityScore(profile, job)
+  const location_score = calculateLocationScore(profile, job)
+  const salary_score = calculateSalaryScore(profile, job)
 
-  const totalScore = skillScore + seniorityScore + locationScore + salaryScore
+  const total_score = skill_score + seniority_score + location_score + salary_score
 
   return {
-    profileId: profile.id,
-    jobId: job.id,
-    totalScore,
+    profile_id: profile.id,
+    job_id: job.id,
+    total_score,
     breakdown: {
-      skillScore,
-      seniorityScore,
-      locationScore,
-      salaryScore
+      skill_score,
+      seniority_score,
+      location_score,
+      salary_score
     },
-    calculatedAt: new Date().toISOString()
+    calculated_at: new Date().toISOString()
   }
 }
 
 export const handler: Handlers['CalculateMatchScores'] = async (input, { state, logger }) => {
-  const { profileId } = input
+  const { profile_id } = input
 
-  logger.info('Calculating match scores for profile', { profileId })
+  logger.info('Calculating match scores for profile', { profile_id })
 
   try {
     // Get the profile
-    const profile = await state.get<Profile>('profiles', profileId)
+    const profile = await state.get<Profile>('profiles', profile_id)
     if (!profile) {
-      logger.warn('Profile not found, skipping match calculation', { profileId })
+      logger.warn('Profile not found, skipping match calculation', { profile_id })
       return
     }
 
     // Get all jobs
     const jobs = await state.getGroup<Job>('jobs')
-    logger.info('Found jobs to match against', { profileId, jobCount: jobs.length })
+    logger.info('Found jobs to match against', { profile_id, jobCount: jobs.length })
 
     if (jobs.length === 0) {
-      logger.info('No jobs found, skipping match calculation', { profileId })
+      logger.info('No jobs found, skipping match calculation', { profile_id })
       return
     }
 
@@ -195,18 +195,18 @@ export const handler: Handlers['CalculateMatchScores'] = async (input, { state, 
       const matchScore = calculateMatchScore(profile, job)
 
       // Store match score with composite key
-      const scoreKey = `${profileId}:${job.id}`
+      const scoreKey = `${profile_id}:${job.id}`
       await state.set('match-scores', scoreKey, matchScore)
       processedCount++
 
       if (processedCount % 100 === 0) {
-        logger.info('Match score calculation progress', { profileId, processedCount, total: jobs.length })
+        logger.info('Match score calculation progress', { profile_id, processedCount, total: jobs.length })
       }
     }
 
-    logger.info('Match score calculation completed', { profileId, jobsProcessed: processedCount })
+    logger.info('Match score calculation completed', { profile_id, jobsProcessed: processedCount })
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    logger.error('Failed to calculate match scores', { profileId, error: errorMessage })
+    logger.error('Failed to calculate match scores', { profile_id, error: errorMessage })
   }
 }

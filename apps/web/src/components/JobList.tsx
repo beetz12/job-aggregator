@@ -10,12 +10,30 @@ interface JobListProps {
   jobs: (Job | MatchedJob)[]
   isLoading?: boolean
   showSaveButton?: boolean
+  // Selection props
+  showCheckbox?: boolean
+  isSelected?: (jobId: string) => boolean
+  onToggleSelect?: (jobId: string) => void
+  onSelectAll?: () => void
+  allSelected?: boolean
+  // Check Fit props
+  showCheckFitButton?: boolean
+  onCheckFit?: (job: Job | MatchedJob) => void
+  checkingFitJobId?: string | null
 }
 
 export default function JobList({
   jobs,
   isLoading,
   showSaveButton = true,
+  showCheckbox = false,
+  isSelected,
+  onToggleSelect,
+  onSelectAll,
+  allSelected = false,
+  showCheckFitButton = false,
+  onCheckFit,
+  checkingFitJobId,
 }: JobListProps) {
   const { data: profile } = useMyProfile()
   const createApplication = useCreateApplication()
@@ -40,8 +58,8 @@ export default function JobList({
     setSavingJobId(job.id)
     try {
       await createApplication.mutateAsync({
-        jobId: job.id,
-        jobTitle: job.title,
+        job_id: job.id,
+        job_title: job.title,
         company: job.company,
         status: 'saved',
       })
@@ -101,6 +119,44 @@ export default function JobList({
         </div>
       )}
 
+      {/* Select All Header */}
+      {showCheckbox && onSelectAll && jobs.length > 0 && (
+        <div className="flex items-center gap-3 mb-4 px-2">
+          <button
+            onClick={onSelectAll}
+            className="flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            <div
+              className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                allSelected
+                  ? 'bg-blue-500 border-blue-500'
+                  : 'bg-gray-800 border-gray-500 hover:border-blue-400'
+              }`}
+            >
+              {allSelected && (
+                <svg
+                  className="w-3 h-3 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              )}
+            </div>
+            <span>{allSelected ? 'Deselect All' : 'Select All'}</span>
+          </button>
+          <span className="text-gray-500 text-sm">
+            ({jobs.length} jobs)
+          </span>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {jobs.map((job) => (
           <JobCard
@@ -109,6 +165,12 @@ export default function JobList({
             onSave={showSaveButton ? () => handleSaveJob(job) : undefined}
             isSaving={savingJobId === job.id}
             showSaveButton={showSaveButton && !savedJobs.has(job.id)}
+            showCheckbox={showCheckbox}
+            isSelected={isSelected ? isSelected(job.id) : false}
+            onToggleSelect={onToggleSelect ? () => onToggleSelect(job.id) : undefined}
+            showCheckFitButton={showCheckFitButton}
+            onCheckFit={onCheckFit ? () => onCheckFit(job) : undefined}
+            isCheckingFit={checkingFitJobId === job.id}
           />
         ))}
       </div>

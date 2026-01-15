@@ -35,8 +35,8 @@ export const handler: Handlers['ListApplications'] = async (req, { state, logger
     applications = applications.filter(app => app.status === status)
   }
 
-  // Sort by updatedAt descending (most recent first)
-  applications.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+  // Sort by updated_at descending (most recent first)
+  applications.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
 
   return {
     status: 200,

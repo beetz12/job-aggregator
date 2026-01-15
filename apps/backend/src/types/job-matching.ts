@@ -44,7 +44,7 @@ export const jobPreferencesSchema = z.object({
   minSalary: z.number().optional(),
   maxSalary: z.number().optional(),
   currency: z.string().optional(),
-  remotePreference: z.enum(['remote-only', 'hybrid', 'onsite', 'flexible']).optional(),
+  remote_preference: z.enum(['remote-only', 'hybrid', 'onsite', 'flexible']).optional(),
   locations: z.array(z.string()).optional(),
   willingToRelocate: z.boolean().optional()
 })
@@ -64,8 +64,8 @@ export const userProfileSchema = z.object({
   education: z.array(educationSchema).optional(),
   preferences: jobPreferencesSchema.optional(),
   voiceStyle: z.enum(['andrew_askins', 'professional', 'friendly']).default('professional'),
-  createdAt: z.string(),
-  updatedAt: z.string()
+  created_at: z.string(),
+  updated_at: z.string()
 })
 
 export type UserProfile = z.infer<typeof userProfileSchema>
@@ -150,7 +150,7 @@ export const matchReportSchema = z.object({
   talkingPoints: z.array(z.string()),
   gapsToAddress: z.array(z.string()),
   interviewQuestions: z.array(z.string()).optional(),
-  createdAt: z.string()
+  created_at: z.string()
 })
 
 export type MatchReport = z.infer<typeof matchReportSchema>
@@ -211,7 +211,7 @@ export const applicationKitSchema = z.object({
   coverLetter: coverLetterOutputSchema.optional(),
   questionAnswers: z.array(questionAnswerSchema).optional(),
   recruiterEmail: recruiterEmailSchema.optional(),
-  createdAt: z.string()
+  created_at: z.string()
 })
 
 export type ApplicationKit = z.infer<typeof applicationKitSchema>
@@ -317,10 +317,134 @@ export type RecruiterResponseRequest = z.infer<typeof recruiterResponseRequestSc
  */
 export const updateUserProfileRequestSchema = userProfileSchema.omit({
   id: true,
-  createdAt: true,
-  updatedAt: true
+  created_at: true,
+  updated_at: true
 }).extend({
   id: z.string().optional() // Optional for creates, required for updates
 })
 
 export type UpdateUserProfileRequest = z.infer<typeof updateUserProfileRequestSchema>
+
+// ============================================================================
+// Enhanced Check-Fit Types - Career Advisor Integration (Phase 6)
+// ============================================================================
+
+/**
+ * Compensation criteria from Career Advisor
+ */
+export const compensationCriteriaSchema = z.object({
+  floor: z.number().describe('Minimum acceptable salary'),
+  target: z.number().describe('Target/ideal salary'),
+  equity: z.boolean().describe('Whether equity is important')
+})
+
+export type CompensationCriteria = z.infer<typeof compensationCriteriaSchema>
+
+/**
+ * Location criteria from Career Advisor
+ */
+export const locationCriteriaSchema = z.object({
+  remote: z.enum(['required', 'preferred', 'flexible']).describe('Remote work preference'),
+  geoRestrictions: z.array(z.string()).optional().describe('Geographic restrictions or preferences')
+})
+
+export type LocationCriteria = z.infer<typeof locationCriteriaSchema>
+
+/**
+ * Culture criteria from Career Advisor
+ */
+export const cultureCriteriaSchema = z.object({
+  values: z.array(z.string()).describe('Important cultural values'),
+  redFlags: z.array(z.string()).describe('Cultural red flags to avoid'),
+  leadershipStyle: z.string().optional().describe('Preferred leadership style')
+})
+
+export type CultureCriteria = z.infer<typeof cultureCriteriaSchema>
+
+/**
+ * Technical stack criteria from Career Advisor
+ */
+export const technicalStackCriteriaSchema = z.object({
+  mustHave: z.array(z.string()).describe('Required technologies'),
+  niceToHave: z.array(z.string()).describe('Preferred technologies'),
+  avoid: z.array(z.string()).optional().describe('Technologies to avoid')
+})
+
+export type TechnicalStackCriteria = z.infer<typeof technicalStackCriteriaSchema>
+
+/**
+ * Complete job criteria from Career Advisor
+ */
+export const jobCriteriaSchema = z.object({
+  compensation: compensationCriteriaSchema.optional(),
+  location: locationCriteriaSchema.optional(),
+  culture: cultureCriteriaSchema.optional(),
+  technicalStack: technicalStackCriteriaSchema.optional(),
+  companyStage: z.enum(['startup', 'growth', 'enterprise', 'any']).optional()
+})
+
+export type JobCriteria = z.infer<typeof jobCriteriaSchema>
+
+/**
+ * Enhanced check-fit request with Career Advisor criteria
+ */
+export const enhancedCheckFitRequestSchema = z.object({
+  job_id: z.string().optional().describe('Job ID to analyze (optional if job_description provided)'),
+  job_description: z.string().optional().describe('Raw job description text (for pasted descriptions)'),
+  profile_id: z.string().describe('User profile ID'),
+  job_criteria: jobCriteriaSchema.optional().describe('Career Advisor job criteria')
+})
+
+export type EnhancedCheckFitRequest = z.infer<typeof enhancedCheckFitRequestSchema>
+
+/**
+ * Criteria match result showing alignment with Career Advisor criteria
+ */
+export const criteriaMatchSchema = z.object({
+  salaryAlignment: z.enum(['above', 'within', 'below', 'unknown']).describe('How job salary compares to criteria'),
+  locationMatch: z.boolean().describe('Whether location/remote matches preferences'),
+  cultureFlags: z.object({
+    green: z.array(z.string()).describe('Positive culture indicators found'),
+    red: z.array(z.string()).describe('Red flags detected')
+  }),
+  techStackCoverage: z.number().min(0).max(100).describe('Percentage of must-have tech covered'),
+  companyStageMatch: z.boolean().describe('Whether company stage matches preference')
+})
+
+export type CriteriaMatch = z.infer<typeof criteriaMatchSchema>
+
+/**
+ * Should apply recommendation levels
+ */
+export const shouldApplySchema = z.enum([
+  'DEFINITELY',     // Strong match on all criteria
+  'LIKELY',         // Good match with minor gaps
+  'MAYBE',          // Mixed signals, worth considering
+  'PROBABLY_NOT',   // Significant concerns
+  'NO'              // Clear misalignment
+])
+
+export type ShouldApply = z.infer<typeof shouldApplySchema>
+
+/**
+ * Enhanced fit analysis result with Career Advisor integration
+ */
+export const enhancedFitAnalysisResultSchema = z.object({
+  // Base fit analysis fields
+  jobId: z.string(),
+  userId: z.string(),
+  companyInsights: companyInsightsSchema,
+  matchAnalysis: matchAnalysisSchema,
+  fitScore: fitScoreSchema,
+  talkingPoints: z.array(z.string()),
+  gapsToAddress: z.array(z.string()),
+  interviewQuestions: z.array(z.string()),
+  analyzedAt: z.string(),
+
+  // Enhanced Career Advisor fields
+  criteriaMatch: criteriaMatchSchema.optional().describe('Detailed criteria alignment (when job_criteria provided)'),
+  shouldApply: shouldApplySchema.describe('Overall recommendation based on all factors'),
+  detailedReasoning: z.array(z.string()).describe('Detailed explanation of the recommendation')
+})
+
+export type EnhancedFitAnalysisResult = z.infer<typeof enhancedFitAnalysisResultSchema>

@@ -16,6 +16,12 @@ import {
   ApplicationKitResult,
   CheckFitRequest,
   GenerateApplicationRequest,
+  EnhancedFitAnalysisResult,
+  EnhancedCheckFitRequest,
+  GenerateInterviewQuestionsResponse,
+  ResumeData,
+  JobRequirementsDoc,
+  AnalyzeResumeResponse,
 } from './types'
 
 // Environment variable for explicit API URL configuration
@@ -133,11 +139,32 @@ export async function getJobs(filters?: JobFilters): Promise<JobsResponse> {
   const apiBase = await discoverApiBase()
   const params = new URLSearchParams()
 
+  // Basic filters
   if (filters?.source) params.set('source', filters.source)
   if (filters?.remote) params.set('remote', 'true')
   if (filters?.limit) params.set('limit', filters.limit.toString())
   if (filters?.offset) params.set('offset', filters.offset.toString())
   if (filters?.search) params.set('search', filters.search)
+
+  // Advanced filters
+  if (filters?.tags && filters.tags.length > 0) {
+    params.set('tags', filters.tags.join(','))
+  }
+  if (filters?.salaryMin !== undefined) {
+    params.set('salaryMin', filters.salaryMin.toString())
+  }
+  if (filters?.salaryMax !== undefined) {
+    params.set('salaryMax', filters.salaryMax.toString())
+  }
+  if (filters?.locations && filters.locations.length > 0) {
+    params.set('locations', filters.locations.join(','))
+  }
+  if (filters?.employmentTypes && filters.employmentTypes.length > 0) {
+    params.set('employmentTypes', filters.employmentTypes.join(','))
+  }
+  if (filters?.experienceLevels && filters.experienceLevels.length > 0) {
+    params.set('experienceLevels', filters.experienceLevels.join(','))
+  }
 
   const url = `${apiBase}/jobs${params.toString() ? `?${params}` : ''}`
 
@@ -491,7 +518,7 @@ export async function generateCoverLetter(
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      profileId,
+      profile_id: profileId,
       tone: options?.tone,
       emphasis: options?.emphasis,
     }),
@@ -515,13 +542,13 @@ export async function generateCoverLetter(
 export async function checkFit(request: CheckFitRequest): Promise<FitAnalysisResult> {
   const apiBase = await discoverApiBase()
 
-  const res = await fetch(`${apiBase}/jobs/${request.jobId}/check-fit`, {
+  const res = await fetch(`${apiBase}/jobs/${request.job_id}/check-fit`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      profileId: request.profileId,
+      profile_id: request.profile_id,
     }),
   })
 
@@ -541,20 +568,210 @@ export async function generateApplication(
 ): Promise<ApplicationKitResult> {
   const apiBase = await discoverApiBase()
 
-  const res = await fetch(`${apiBase}/jobs/${request.jobId}/generate-application`, {
+  const res = await fetch(`${apiBase}/jobs/${request.job_id}/generate-application`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      profileId: request.profileId,
-      applicationQuestions: request.applicationQuestions,
+      profile_id: request.profile_id,
+      applicationQuestions: request.application_questions,
     }),
   })
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: 'Failed to generate application' }))
     throw new Error(error.error || `Failed to generate application: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+/**
+ * Enhanced check fit with Career Advisor criteria support.
+ * Allows checking fit for either an existing job (by ID) or a pasted job description.
+ * Includes optional job criteria for enhanced analysis.
+ */
+export async function checkFitWithCriteria(
+  request: EnhancedCheckFitRequest
+): Promise<EnhancedFitAnalysisResult> {
+  const apiBase = await discoverApiBase()
+
+  // Determine the endpoint based on whether we have a job_id or job_description
+  const endpoint = request.job_id
+    ? `${apiBase}/jobs/${request.job_id}/check-fit`
+    : `${apiBase}/jobs/check-fit`
+
+  const res = await fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      job_id: request.job_id,
+      job_description: request.job_description,
+      profile_id: request.profile_id,
+      job_criteria: request.job_criteria,
+    }),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to check fit' }))
+    throw new Error(error.error || `Failed to check fit: ${res.status}`)
+  }
+
+  const data = await res.json()
+
+  // Transform backend response (camelCase) to frontend format (snake_case)
+  // This handles the case where the backend returns camelCase keys
+  return transformFitAnalysisResponse(data)
+}
+
+/**
+ * Transform backend fit analysis response to frontend format.
+ * Handles both camelCase (from backend) and snake_case (already transformed) formats.
+ */
+function transformFitAnalysisResponse(data: Record<string, unknown>): EnhancedFitAnalysisResult {
+  // Check if already in snake_case format
+  if ('job_id' in data && 'user_id' in data) {
+    return data as unknown as EnhancedFitAnalysisResult
+  }
+
+  // Transform from camelCase to snake_case
+  const transformed: EnhancedFitAnalysisResult = {
+    job_id: (data.jobId as string) || '',
+    user_id: (data.userId as string) || '',
+    company_insights: {
+      overall_score: (data.companyInsights as Record<string, unknown>)?.overallScore as number || 0,
+      scores: {
+        compensation: ((data.companyInsights as Record<string, unknown>)?.scores as Record<string, number>)?.compensation || 0,
+        culture: ((data.companyInsights as Record<string, unknown>)?.scores as Record<string, number>)?.culture || 0,
+        family_friendliness: ((data.companyInsights as Record<string, unknown>)?.scores as Record<string, number>)?.familyFriendliness || 0,
+        technical_fit: ((data.companyInsights as Record<string, unknown>)?.scores as Record<string, number>)?.technicalFit || 0,
+        industry: ((data.companyInsights as Record<string, unknown>)?.scores as Record<string, number>)?.industry || 0,
+        long_term_potential: ((data.companyInsights as Record<string, unknown>)?.scores as Record<string, number>)?.longTermPotential || 0,
+      },
+      green_flags: ((data.companyInsights as Record<string, unknown>)?.greenFlags as string[]) || [],
+      red_flags: ((data.companyInsights as Record<string, unknown>)?.redFlags as string[]) || [],
+      recent_news: ((data.companyInsights as Record<string, unknown>)?.recentNews as string[]) || [],
+      recommendation: ((data.companyInsights as Record<string, unknown>)?.recommendation as 'STRONG_YES' | 'YES' | 'MAYBE' | 'PASS') || 'MAYBE',
+    },
+    match_analysis: {
+      overall_match: (data.matchAnalysis as Record<string, unknown>)?.overallMatch as number || 0,
+      strong_matches: ((data.matchAnalysis as Record<string, unknown>)?.strongMatches as string[]) || [],
+      partial_matches: ((data.matchAnalysis as Record<string, unknown>)?.partialMatches as string[]) || [],
+      gaps: ((data.matchAnalysis as Record<string, unknown>)?.gaps as string[]) || [],
+      transferable_skills: ((data.matchAnalysis as Record<string, unknown>)?.transferableSkills as string[]) || [],
+    },
+    fit_score: {
+      composite: (data.fitScore as Record<string, unknown>)?.composite as number || 0,
+      confidence: (data.fitScore as Record<string, unknown>)?.confidence as number || 0,
+      recommendation: ((data.fitScore as Record<string, unknown>)?.recommendation as 'STRONG_APPLY' | 'APPLY' | 'CONDITIONAL' | 'SKIP') || 'CONDITIONAL',
+      reasoning: ((data.fitScore as Record<string, unknown>)?.reasoning as string) || '',
+    },
+    talking_points: (data.talkingPoints as string[]) || [],
+    gaps_to_address: (data.gapsToAddress as string[]) || [],
+    interview_questions: (data.interviewQuestions as string[]) || [],
+    analyzed_at: (data.analyzedAt as string) || new Date().toISOString(),
+    criteria_match: data.criteriaMatch ? {
+      salaryAlignment: ((data.criteriaMatch as Record<string, unknown>)?.salaryAlignment as 'above' | 'within' | 'below' | 'unknown') || 'unknown',
+      locationMatch: ((data.criteriaMatch as Record<string, unknown>)?.locationMatch as boolean) || false,
+      cultureFlags: {
+        green: (((data.criteriaMatch as Record<string, unknown>)?.cultureFlags as Record<string, string[]>)?.green) || [],
+        red: (((data.criteriaMatch as Record<string, unknown>)?.cultureFlags as Record<string, string[]>)?.red) || [],
+      },
+      techStackCoverage: ((data.criteriaMatch as Record<string, unknown>)?.techStackCoverage as number) || 0,
+      companyStageMatch: ((data.criteriaMatch as Record<string, unknown>)?.companyStageMatch as boolean) || false,
+    } : undefined,
+    should_apply: (data.shouldApply as 'DEFINITELY' | 'LIKELY' | 'MAYBE' | 'PROBABLY_NOT' | 'NO') || 'MAYBE',
+    detailed_reasoning: (data.detailedReasoning as string[]) || [],
+  }
+
+  return transformed
+}
+
+// ============================================================================
+// Interview Questions API
+// ============================================================================
+
+/**
+ * Generate personalized interview questions based on resume content.
+ * Uses LLM to analyze the resume and create contextual questions.
+ * Falls back to default questions if LLM call fails.
+ */
+export async function generateInterviewQuestions(
+  resumeText: string,
+  questionCount: number = 5
+): Promise<GenerateInterviewQuestionsResponse> {
+  const apiBase = await discoverApiBase()
+
+  const res = await fetch(`${apiBase}/interview-questions/generate`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      resume_text: resumeText,
+      question_count: questionCount,
+    }),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to generate interview questions' }))
+    throw new Error(error.error || `Failed to generate interview questions: ${res.status}`)
+  }
+
+  return res.json()
+}
+
+// ============================================================================
+// Career Compass API (Resume Analysis & Job Requirements Generation)
+// ============================================================================
+
+/**
+ * Analyze resume using Gemini AI
+ * Returns structured resume data and personalized interview questions
+ */
+export async function analyzeResumeWithAI(resumeText: string): Promise<AnalyzeResumeResponse> {
+  const apiBase = await discoverApiBase()
+
+  const res = await fetch(`${apiBase}/resume/analyze`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ resumeText }),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to analyze resume' }))
+    throw new Error(error.error || 'Failed to analyze resume')
+  }
+
+  return res.json()
+}
+
+/**
+ * Generate job requirements document using Gemini AI
+ * Returns comprehensive job search criteria based on resume and interview answers
+ */
+export async function generateRequirementsDoc(
+  resumeData: ResumeData,
+  answers: Record<string, string>
+): Promise<JobRequirementsDoc> {
+  const apiBase = await discoverApiBase()
+
+  const res = await fetch(`${apiBase}/resume/requirements-doc`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ resumeData, answers }),
+  })
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to generate requirements' }))
+    throw new Error(error.error || 'Failed to generate requirements document')
   }
 
   return res.json()

@@ -28,16 +28,16 @@ export const SCRAPER_SOURCES = [
   'wellfound',
   'yc_jobs',
   'themuse',
-  'jobicy_api'
+  'jobicy_api',
+  'reddit',
+  'googlejobs'
 ] as const
 
 /**
  * Legacy sources (may not be actively scraped but kept for backwards compatibility)
+ * NOTE: reddit and googlejobs have been moved to SCRAPER_SOURCES as they are actively supported
  */
-export const LEGACY_SOURCES = [
-  'reddit',
-  'googlejobs'
-] as const
+export const LEGACY_SOURCES = [] as const
 
 /**
  * All supported job sources (union of scraper + legacy)
@@ -92,7 +92,9 @@ export const scraperSourceEnum = z.enum([
   'wellfound',
   'yc_jobs',
   'themuse',
-  'jobicy_api'
+  'jobicy_api',
+  'reddit',
+  'googlejobs'
 ])
 
 export type ScraperSource = z.infer<typeof scraperSourceEnum>
@@ -133,10 +135,10 @@ export const SOURCE_INFO: Record<JobSource, SourceInfo> = {
   reddit: {
     name: 'reddit',
     displayName: 'Reddit',
-    type: 'legacy',
+    type: 'scraper',
     color: '#FF4500',
     reliabilityScore: 75,
-    isActive: false
+    isActive: true
   },
   remotive: {
     name: 'remotive',
@@ -157,10 +159,10 @@ export const SOURCE_INFO: Record<JobSource, SourceInfo> = {
   googlejobs: {
     name: 'googlejobs',
     displayName: 'Google Jobs',
-    type: 'legacy',
+    type: 'api',
     color: '#4285F4',
     reliabilityScore: 95,
-    isActive: false
+    isActive: true
   },
   jobicy: {
     name: 'jobicy',

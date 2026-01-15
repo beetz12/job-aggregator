@@ -8,28 +8,28 @@ export const profileSchema = z.object({
   name: z.string(),
   email: z.string().email(),
   skills: z.array(z.string()),
-  experienceYears: z.number(),
-  seniorityLevel: z.enum(['junior', 'mid', 'senior', 'lead']),
-  preferredLocations: z.array(z.string()),
-  remotePreference: z.enum(['remote-only', 'hybrid', 'onsite', 'flexible']),
-  salaryExpectation: z.object({
+  experience_years: z.number(),
+  seniority_level: z.enum(['junior', 'mid', 'senior', 'lead']),
+  preferred_locations: z.array(z.string()),
+  remote_preference: z.enum(['remote-only', 'hybrid', 'onsite', 'flexible']),
+  salary_expectation: z.object({
     min: z.number(),
     max: z.number(),
     currency: z.string()
   }).optional(),
-  createdAt: z.string(),
-  updatedAt: z.string()
+  created_at: z.string(),
+  updated_at: z.string()
 })
 
 export type Profile = z.infer<typeof profileSchema>
 
 /**
- * Schema for creating/updating a profile (without id, createdAt, updatedAt)
+ * Schema for creating/updating a profile (without id, created_at, updated_at)
  */
 export const createProfileSchema = profileSchema.omit({
   id: true,
-  createdAt: true,
-  updatedAt: true
+  created_at: true,
+  updated_at: true
 }).extend({
   id: z.string().optional() // Optional for updates
 })
@@ -40,16 +40,16 @@ export type CreateProfileInput = z.infer<typeof createProfileSchema>
  * Match score schema for job-profile matching
  */
 export const matchScoreSchema = z.object({
-  profileId: z.string(),
-  jobId: z.string(),
-  totalScore: z.number().min(0).max(100),
+  profile_id: z.string(),
+  job_id: z.string(),
+  total_score: z.number().min(0).max(100),
   breakdown: z.object({
-    skillScore: z.number().min(0).max(50),
-    seniorityScore: z.number().min(0).max(20),
-    locationScore: z.number().min(0).max(15),
-    salaryScore: z.number().min(0).max(15)
+    skill_score: z.number().min(0).max(50),
+    seniority_score: z.number().min(0).max(20),
+    location_score: z.number().min(0).max(15),
+    salary_score: z.number().min(0).max(15)
   }),
-  calculatedAt: z.string()
+  calculated_at: z.string()
 })
 
 export type MatchScore = z.infer<typeof matchScoreSchema>

@@ -9,6 +9,70 @@ import { parsePostedAt, extractTags, isRemoteJob, type GoogleJobRaw } from '../s
 import type { Job, JobSourceType } from '../types/job'
 import { jobSourceEnum } from '../services/sources'
 
+// =============================================================================
+// VALUE NORMALIZERS
+// =============================================================================
+
+const EMPLOYMENT_TYPE_MAP: Record<string, 'full-time' | 'part-time' | 'contract' | 'internship'> = {
+  'full-time': 'full-time',
+  'part-time': 'part-time',
+  'contract': 'contract',
+  'internship': 'internship',
+  'fulltime': 'full-time',
+  'full time': 'full-time',
+  'full_time': 'full-time',
+  'permanent': 'full-time',
+  'ft': 'full-time',
+  'parttime': 'part-time',
+  'part time': 'part-time',
+  'pt': 'part-time',
+  'contractor': 'contract',
+  'freelance': 'contract',
+  'freelancer': 'contract',
+  'temporary': 'contract',
+  'temp': 'contract',
+  'intern': 'internship',
+  'trainee': 'internship',
+}
+
+function normalizeEmploymentType(raw: string | undefined | null): 'full-time' | 'part-time' | 'contract' | 'internship' | undefined {
+  if (!raw) return undefined
+  const normalized = raw.toLowerCase().trim().replace(/[-_]/g, ' ').replace(/\s+/g, ' ')
+  return EMPLOYMENT_TYPE_MAP[normalized] || EMPLOYMENT_TYPE_MAP[normalized.replace(/ /g, '-')] || undefined
+}
+
+const EXPERIENCE_LEVEL_MAP: Record<string, 'entry' | 'mid' | 'senior' | 'lead' | 'executive'> = {
+  'entry': 'entry',
+  'mid': 'mid',
+  'senior': 'senior',
+  'lead': 'lead',
+  'executive': 'executive',
+  'entry-level': 'entry',
+  'entry level': 'entry',
+  'junior': 'entry',
+  'jr': 'entry',
+  'associate': 'entry',
+  'mid-level': 'mid',
+  'mid level': 'mid',
+  'intermediate': 'mid',
+  'sr': 'senior',
+  'senior-level': 'senior',
+  'principal': 'senior',
+  'staff': 'senior',
+  'team lead': 'lead',
+  'tech lead': 'lead',
+  'manager': 'lead',
+  'director': 'executive',
+  'vp': 'executive',
+  'chief': 'executive',
+}
+
+function normalizeExperienceLevel(raw: string | undefined | null): 'entry' | 'mid' | 'senior' | 'lead' | 'executive' | undefined {
+  if (!raw) return undefined
+  const normalized = raw.toLowerCase().trim()
+  return EXPERIENCE_LEVEL_MAP[normalized] || EXPERIENCE_LEVEL_MAP[normalized.replace(/-/g, ' ')] || undefined
+}
+
 // Extended input schema that accepts both old and new formats
 const inputSchema = z.object({
   source: jobSourceEnum,
@@ -41,8 +105,8 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
     if (rawJob.source_id) {
       normalizedJob = await normalizeScraperApiJob(rawJob, source, inputFetchedAt, logger)
     } else if (source === 'arbeitnow') {
-      const createdAt = rawJob.created_at as number
-      const postedAt = new Date(createdAt * 1000).toISOString()
+      const created_at = rawJob.created_at as number
+      const postedAt = new Date(created_at * 1000).toISOString()
       normalizedJob = {
         id: `arbeitnow_${rawJob.slug as string}`,
         title: (rawJob.title as string) || 'Untitled',
@@ -52,18 +116,18 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: (rawJob.url as string) || '',
         description: ((rawJob.description as string) || '').substring(0, 500),
         source: 'arbeitnow',
-        postedAt,
-        fetchedAt: new Date().toISOString(),
+        posted_at: postedAt,
+        fetched_at: new Date().toISOString(),
         tags: (rawJob.tags as string[]) || [],
-        healthScore: calculateHealthScore(postedAt),
+        health_score: calculateHealthScore(postedAt),
         // Extended fields - explicitly undefined for legacy sources
-        sourceId: undefined,
-        companyUrl: undefined,
-        locationParsed: undefined,
+        source_id: undefined,
+        company_url: undefined,
+        location_parsed: undefined,
         salary: undefined,
-        employmentType: undefined,
-        experienceLevel: undefined,
-        contentHash: undefined
+        employment_type: undefined,
+        experience_level: undefined,
+        content_hash: undefined
       }
     } else if (source === 'hackernews') {
       const postedAtRaw = rawJob.posted_at as number | undefined
@@ -84,18 +148,18 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: (rawJob.url as string) || `https://news.ycombinator.com/item?id=${rawJob.id}`,
         description: descriptionStr.substring(0, 500),
         source: 'hackernews',
-        postedAt,
-        fetchedAt: new Date().toISOString(),
+        posted_at: postedAt,
+        fetched_at: new Date().toISOString(),
         tags: [],
-        healthScore: calculateHealthScore(postedAt),
+        health_score: calculateHealthScore(postedAt),
         // Extended fields - explicitly undefined for legacy sources
-        sourceId: undefined,
-        companyUrl: undefined,
-        locationParsed: undefined,
+        source_id: undefined,
+        company_url: undefined,
+        location_parsed: undefined,
         salary: undefined,
-        employmentType: undefined,
-        experienceLevel: undefined,
-        contentHash: undefined
+        employment_type: undefined,
+        experience_level: undefined,
+        content_hash: undefined
       }
     } else if (source === 'reddit') {
       const postedAtRaw = rawJob.posted_at as number | undefined
@@ -116,18 +180,18 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: (rawJob.url as string) || '',
         description: descriptionStr.substring(0, 500),
         source: 'reddit',
-        postedAt,
-        fetchedAt: new Date().toISOString(),
+        posted_at: postedAt,
+        fetched_at: new Date().toISOString(),
         tags: (rawJob.tags as string[]) || [],
-        healthScore: calculateHealthScore(postedAt),
+        health_score: calculateHealthScore(postedAt),
         // Extended fields - explicitly undefined for legacy sources
-        sourceId: undefined,
-        companyUrl: undefined,
-        locationParsed: undefined,
+        source_id: undefined,
+        company_url: undefined,
+        location_parsed: undefined,
         salary: undefined,
-        employmentType: undefined,
-        experienceLevel: undefined,
-        contentHash: undefined
+        employment_type: undefined,
+        experience_level: undefined,
+        content_hash: undefined
       }
     } else if (source === 'remotive') {
       const postedAtRaw = rawJob.posted_at as number | undefined
@@ -143,18 +207,18 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: (rawJob.url as string) || '',
         description: ((rawJob.description as string) || '').substring(0, 500),
         source: 'remotive',
-        postedAt,
-        fetchedAt: new Date().toISOString(),
+        posted_at: postedAt,
+        fetched_at: new Date().toISOString(),
         tags: (rawJob.tags as string[]) || [],
-        healthScore: calculateHealthScore(postedAt),
+        health_score: calculateHealthScore(postedAt),
         // Extended fields - explicitly undefined for legacy sources
-        sourceId: undefined,
-        companyUrl: undefined,
-        locationParsed: undefined,
+        source_id: undefined,
+        company_url: undefined,
+        location_parsed: undefined,
         salary: undefined,
-        employmentType: undefined,
-        experienceLevel: undefined,
-        contentHash: undefined
+        employment_type: undefined,
+        experience_level: undefined,
+        content_hash: undefined
       }
     } else if (source === 'googlejobs') {
       // Cast to GoogleJobRaw for proper typing
@@ -182,18 +246,18 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: applyUrl,
         description: (googleJob.description || '').substring(0, 500),
         source: 'googlejobs',
-        postedAt,
-        fetchedAt: new Date().toISOString(),
+        posted_at: postedAt,
+        fetched_at: new Date().toISOString(),
         tags,
-        healthScore: calculateHealthScore(postedAt),
+        health_score: calculateHealthScore(postedAt),
         // Extended fields - explicitly undefined for legacy sources
-        sourceId: undefined,
-        companyUrl: undefined,
-        locationParsed: undefined,
+        source_id: undefined,
+        company_url: undefined,
+        location_parsed: undefined,
         salary: undefined,
-        employmentType: undefined,
-        experienceLevel: undefined,
-        contentHash: undefined
+        employment_type: undefined,
+        experience_level: undefined,
+        content_hash: undefined
       }
     } else if (source === 'wellfound') {
       // Wellfound (AngelList) jobs from Playwright scraper
@@ -226,18 +290,18 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: (rawJob.url as string) || '',
         description: ((rawJob.description as string) || '').substring(0, 500),
         source: 'wellfound',
-        postedAt,
-        fetchedAt: new Date().toISOString(),
+        posted_at: postedAt,
+        fetched_at: new Date().toISOString(),
         tags,
-        healthScore: calculateHealthScore(postedAt),
+        health_score: calculateHealthScore(postedAt),
         // Extended fields - explicitly undefined for legacy sources
-        sourceId: undefined,
-        companyUrl: undefined,
-        locationParsed: undefined,
+        source_id: undefined,
+        company_url: undefined,
+        location_parsed: undefined,
         salary: undefined,
-        employmentType: undefined,
-        experienceLevel: undefined,
-        contentHash: undefined
+        employment_type: undefined,
+        experience_level: undefined,
+        content_hash: undefined
       }
     } else if (source === 'jobicy') {
       // Jobicy remote jobs API
@@ -263,18 +327,18 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: (rawJob.url as string) || '',
         description,
         source: 'jobicy',
-        postedAt,
-        fetchedAt: new Date().toISOString(),
+        posted_at: postedAt,
+        fetched_at: new Date().toISOString(),
         tags,
-        healthScore: calculateHealthScore(postedAt),
+        health_score: calculateHealthScore(postedAt),
         // Extended fields - explicitly undefined for legacy sources
-        sourceId: undefined,
-        companyUrl: undefined,
-        locationParsed: undefined,
+        source_id: undefined,
+        company_url: undefined,
+        location_parsed: undefined,
         salary: undefined,
-        employmentType: undefined,
-        experienceLevel: undefined,
-        contentHash: undefined
+        employment_type: undefined,
+        experience_level: undefined,
+        content_hash: undefined
       }
     } else if (source === 'weworkremotely') {
       // WeWorkRemotely RSS feed jobs
@@ -309,18 +373,18 @@ export const handler: Handlers['NormalizeJob'] = async (input, { emit, logger })
         url: (rawJob.link as string) || '',
         description,
         source: 'weworkremotely',
-        postedAt,
-        fetchedAt: new Date().toISOString(),
+        posted_at: postedAt,
+        fetched_at: new Date().toISOString(),
         tags: [],
-        healthScore: calculateHealthScore(postedAt),
+        health_score: calculateHealthScore(postedAt),
         // Extended fields - explicitly undefined for legacy sources
-        sourceId: undefined,
-        companyUrl: undefined,
-        locationParsed: undefined,
+        source_id: undefined,
+        company_url: undefined,
+        location_parsed: undefined,
         salary: undefined,
-        employmentType: undefined,
-        experienceLevel: undefined,
-        contentHash: undefined
+        employment_type: undefined,
+        experience_level: undefined,
+        content_hash: undefined
       }
     } else {
       logger.warn('Unknown source, skipping', { source })
@@ -362,7 +426,7 @@ async function normalizeScraperApiJob(
   // Determine remote status (from rawJob or parsed location)
   const isRemote = rawJob.remote !== undefined
     ? Boolean(rawJob.remote)
-    : parsedLocation.isRemote
+    : parsedLocation.is_remote
 
   // Parse salary using the salary parser
   const salaryParsed = parseSalary(
@@ -411,19 +475,19 @@ async function normalizeScraperApiJob(
   // Build normalized job
   const normalizedJob: Job = {
     id: `${source}_${rawJob.source_id as string}`,
-    sourceId: rawJob.source_id as string,
+    source_id: rawJob.source_id as string,
     source: source as JobSourceType,
 
     title: (rawJob.title as string) || 'Untitled',
     company: (rawJob.company as string) || 'Unknown Company',
-    companyUrl: rawJob.company_url as string | undefined,
+    company_url: rawJob.company_url as string | undefined,
 
     location: locationDisplay,
-    locationParsed: parsedLocation.city || parsedLocation.country ? {
+    location_parsed: parsedLocation.city || parsedLocation.country ? {
       city: parsedLocation.city,
       state: parsedLocation.state,
       country: parsedLocation.country,
-      countryCode: parsedLocation.countryCode,
+      country_code: parsedLocation.country_code,
       raw: parsedLocation.raw
     } : undefined,
     remote: isRemote,
@@ -436,27 +500,27 @@ async function normalizeScraperApiJob(
       max: salaryParsed.max,
       currency: salaryParsed.currency,
       period: salaryParsed.period,
-      normalizedYearly: salaryParsed.normalizedYearly
+      normalized_yearly: salaryParsed.normalized_yearly
     } : undefined,
 
-    employmentType: rawJob.employment_type as string | undefined,
-    experienceLevel: rawJob.experience_level as string | undefined,
+    employment_type: normalizeEmploymentType(rawJob.employment_type as string | undefined),
+    experience_level: normalizeExperienceLevel(rawJob.experience_level as string | undefined),
 
     tags,
     skills,
 
-    postedAt,
-    fetchedAt: actualFetchedAt,
+    posted_at: postedAt,
+    fetched_at: actualFetchedAt,
 
-    healthScore,
-    contentHash
+    health_score: healthScore,
+    content_hash: contentHash
   }
 
   logger.debug('Normalized scraper API job', {
-    sourceId: normalizedJob.sourceId,
+    source_id: normalizedJob.source_id,
     title: normalizedJob.title,
     company: normalizedJob.company,
-    healthScore,
+    health_score: healthScore,
     hasLocation: !!normalizedJob.location,
     hasSalary: !!normalizedJob.salary
   })
@@ -559,9 +623,9 @@ function buildLocationDisplay(
   }
 
   // Add remote indicator if applicable
-  if (parsed.isRemote && parts.length > 0) {
-    const remoteLabel = parsed.remoteType === 'hybrid' ? ' (Hybrid)'
-      : parsed.remoteType === 'flexible' ? ' (Flexible Remote)'
+  if (parsed.is_remote && parts.length > 0) {
+    const remoteLabel = parsed.remote_type === 'hybrid' ? ' (Hybrid)'
+      : parsed.remote_type === 'flexible' ? ' (Flexible Remote)'
         : ' (Remote)'
     return parts.join(', ') + remoteLabel
   }

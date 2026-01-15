@@ -35,10 +35,10 @@ export function normalizeArbeitnowJob(raw: ArbeitnowJob): Job {
     url: raw.url,
     description: raw.description.substring(0, 500),
     source: 'arbeitnow',
-    postedAt,
-    fetchedAt: new Date().toISOString(),
+    posted_at: postedAt,
+    fetched_at: new Date().toISOString(),
     tags: raw.tags || [],
-    healthScore: calculateHealthScore(postedAt)
+    health_score: calculateHealthScore(postedAt)
   }
 }
 
@@ -55,9 +55,9 @@ export function normalizeHackerNewsJob(raw: HackerNewsJob): Job {
     url: raw.url,
     description: raw.description.substring(0, 500),
     source: 'hackernews',
-    postedAt,
-    fetchedAt: new Date().toISOString(),
+    posted_at: postedAt,
+    fetched_at: new Date().toISOString(),
     tags: [],
-    healthScore: calculateHealthScore(postedAt)
+    health_score: calculateHealthScore(postedAt)
   }
 }

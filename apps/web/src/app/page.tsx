@@ -39,7 +39,7 @@ export default function Dashboard() {
       <StatsCards
         totalJobs={jobsData?.total || 0}
         sources={jobsData?.sources || []}
-        lastUpdated={jobsData?.lastUpdated}
+        lastUpdated={jobsData?.last_updated}
       />
 
       <SourceStatus

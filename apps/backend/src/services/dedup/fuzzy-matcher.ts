@@ -168,13 +168,13 @@ export function compareLocations(location1?: string, location2?: string): number
 export function fuzzyMatchJobs(job1: Job, job2: Job): FuzzyMatchResult {
   const titleScore = compareTitles(job1.title, job2.title)
   const companyScore = compareCompanies(job1.company, job2.company)
-  const locationScore = compareLocations(job1.location, job2.location)
+  const location_score = compareLocations(job1.location, job2.location)
 
   // Calculate weighted combined score
   const combinedScore =
     titleScore * MATCH_WEIGHTS.TITLE +
     companyScore * MATCH_WEIGHTS.COMPANY +
-    locationScore * MATCH_WEIGHTS.LOCATION
+    location_score * MATCH_WEIGHTS.LOCATION
 
   // Determine if this is a match based on individual thresholds AND combined score
   const titleMatch = titleScore >= MATCH_THRESHOLDS.TITLE
@@ -190,7 +190,7 @@ export function fuzzyMatchJobs(job1: Job, job2: Job): FuzzyMatchResult {
     details: {
       title: titleScore,
       company: companyScore,
-      location: locationScore,
+      location: location_score,
     },
   }
 }

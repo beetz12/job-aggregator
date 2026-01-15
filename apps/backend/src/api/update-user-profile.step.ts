@@ -52,10 +52,10 @@ export const handler: Handlers['UpdateUserProfile'] = async (req, { state, emit,
       existingProfile = await state.get<UserProfile>('user-profiles', validatedInput.id)
     }
 
-    const profileId = validatedInput.id || randomUUID()
+    const profile_id = validatedInput.id || randomUUID()
 
     const profile: UserProfile = {
-      id: profileId,
+      id: profile_id,
       name: validatedInput.name,
       email: validatedInput.email,
       summary: validatedInput.summary,
@@ -64,15 +64,15 @@ export const handler: Handlers['UpdateUserProfile'] = async (req, { state, emit,
       education: validatedInput.education,
       preferences: validatedInput.preferences,
       voiceStyle: validatedInput.voiceStyle || 'professional',
-      createdAt: existingProfile?.createdAt || now,
-      updatedAt: now
+      created_at: existingProfile?.created_at || now,
+      updated_at: now
     }
 
     // Store profile in state
-    await state.set('user-profiles', profileId, profile)
+    await state.set('user-profiles', profile_id, profile)
 
     logger.info('User profile saved', {
-      profileId,
+      profile_id,
       isUpdate: !!existingProfile,
       skillCount: profile.skills.length,
       experienceCount: profile.experience?.length || 0
@@ -82,13 +82,13 @@ export const handler: Handlers['UpdateUserProfile'] = async (req, { state, emit,
     await emit({
       topic: 'user-profile-updated',
       data: {
-        profileId,
+        profile_id,
         isUpdate: !!existingProfile,
         skills: profile.skills
       }
     })
 
-    logger.info('Emitted user-profile-updated event', { profileId })
+    logger.info('Emitted user-profile-updated event', { profile_id })
 
     return {
       status: existingProfile ? 200 : 201,

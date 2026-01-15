@@ -35,20 +35,20 @@ export const config: ApiRouteConfig = {
 export const handler: Handlers['GetProfile'] = async (req, { state, logger }) => {
   const { id } = req.pathParams
 
-  logger.info('Fetching profile', { profileId: id })
+  logger.info('Fetching profile', { profile_id: id })
 
   try {
     const profile = await state.get<Profile>('profiles', id)
 
     if (!profile) {
-      logger.info('Profile not found', { profileId: id })
+      logger.info('Profile not found', { profile_id: id })
       return {
         status: 404,
         body: { error: 'Profile not found' }
       }
     }
 
-    logger.info('Profile retrieved', { profileId: id })
+    logger.info('Profile retrieved', { profile_id: id })
     return {
       status: 200,
       body: {
@@ -58,7 +58,7 @@ export const handler: Handlers['GetProfile'] = async (req, { state, logger }) =>
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    logger.error('Failed to fetch profile', { profileId: id, error: errorMessage })
+    logger.error('Failed to fetch profile', { profile_id: id, error: errorMessage })
     return {
       status: 500,
       body: { error: 'Failed to fetch profile' }

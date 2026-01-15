@@ -8,9 +8,9 @@ export interface ParsedLocation {
   city?: string;
   state?: string;
   country?: string;
-  countryCode?: string;
-  isRemote: boolean;
-  remoteType?: 'full' | 'hybrid' | 'flexible';
+  country_code?: string;
+  is_remote: boolean;
+  remote_type?: 'full' | 'hybrid' | 'flexible';
 }
 
 // Patterns for detecting remote work types
@@ -89,13 +89,13 @@ const COUNTRY_NAMES: Record<string, string> = Object.entries(COUNTRY_CODES).redu
 /**
  * Detects if location indicates remote work and what type
  */
-function detectRemote(text: string): { isRemote: boolean; remoteType?: 'full' | 'hybrid' | 'flexible' } {
+function detectRemote(text: string): { is_remote: boolean; remote_type?: 'full' | 'hybrid' | 'flexible' } {
   for (const { pattern, type } of REMOTE_PATTERNS) {
     if (pattern.test(text)) {
-      return { isRemote: true, remoteType: type };
+      return { is_remote: true, remote_type: type };
     }
   }
-  return { isRemote: false };
+  return { is_remote: false };
 }
 
 /**
@@ -159,20 +159,20 @@ function parseCountry(part: string): { name: string; code: string } | null {
  */
 export function parseLocation(raw: string | undefined): ParsedLocation {
   if (!raw || raw.trim() === '') {
-    return { raw: '', isRemote: false };
+    return { raw: '', is_remote: false };
   }
 
   const normalizedRaw = raw.trim();
   const result: ParsedLocation = {
     raw: normalizedRaw,
-    isRemote: false,
+    is_remote: false,
   };
 
   // Detect remote work
   const remoteInfo = detectRemote(normalizedRaw);
-  result.isRemote = remoteInfo.isRemote;
-  if (remoteInfo.remoteType) {
-    result.remoteType = remoteInfo.remoteType;
+  result.is_remote = remoteInfo.is_remote;
+  if (remoteInfo.remote_type) {
+    result.remote_type = remoteInfo.remote_type;
   }
 
   // Remove remote-related text for parsing the actual location
@@ -205,7 +205,7 @@ export function parseLocation(raw: string | undefined): ParsedLocation {
     const country = parseCountry(part);
     if (country) {
       result.country = country.name;
-      result.countryCode = country.code;
+      result.country_code = country.code;
       return result;
     }
 
@@ -214,7 +214,7 @@ export function parseLocation(raw: string | undefined): ParsedLocation {
     if (state) {
       result.state = state.full;
       result.country = 'United States';
-      result.countryCode = 'US';
+      result.country_code = 'US';
       return result;
     }
 
@@ -230,7 +230,7 @@ export function parseLocation(raw: string | undefined): ParsedLocation {
       result.city = parts[0];
       result.state = state.full;
       result.country = 'United States';
-      result.countryCode = 'US';
+      result.country_code = 'US';
     } else if (country) {
       // Check if first part is a state
       const firstAsState = parseUSState(parts[0]);
@@ -240,7 +240,7 @@ export function parseLocation(raw: string | undefined): ParsedLocation {
         result.city = parts[0];
       }
       result.country = country.name;
-      result.countryCode = country.code;
+      result.country_code = country.code;
     } else {
       // Assume City, Region format
       result.city = parts[0];
@@ -255,7 +255,7 @@ export function parseLocation(raw: string | undefined): ParsedLocation {
 
     if (country) {
       result.country = country.name;
-      result.countryCode = country.code;
+      result.country_code = country.code;
 
       // Middle parts are state/region
       const middleParts = parts.slice(1, -1);
@@ -288,9 +288,9 @@ export function formatLocation(parsed: ParsedLocation): string {
 
   let location = parts.join(', ');
 
-  if (parsed.isRemote) {
-    const remoteLabel = parsed.remoteType
-      ? `${parsed.remoteType.charAt(0).toUpperCase() + parsed.remoteType.slice(1)} Remote`
+  if (parsed.is_remote) {
+    const remoteLabel = parsed.remote_type
+      ? `${parsed.remote_type.charAt(0).toUpperCase() + parsed.remote_type.slice(1)} Remote`
       : 'Remote';
     location = location ? `${remoteLabel} - ${location}` : remoteLabel;
   }

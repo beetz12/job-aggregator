@@ -97,13 +97,13 @@ export default function SourcesPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 pt-4 border-t border-gray-700">
               <div>
                 <div className="text-gray-400 text-sm">Jobs Fetched</div>
-                <div className="text-2xl font-bold text-white">{source.jobCount}</div>
+                <div className="text-2xl font-bold text-white">{source.job_count}</div>
               </div>
               <div>
                 <div className="text-gray-400 text-sm">Last Fetch</div>
                 <div className="text-lg text-white">
-                  {source.lastFetch
-                    ? new Date(source.lastFetch).toLocaleString()
+                  {source.last_fetch
+                    ? new Date(source.last_fetch).toLocaleString()
                     : 'Never'
                   }
                 </div>

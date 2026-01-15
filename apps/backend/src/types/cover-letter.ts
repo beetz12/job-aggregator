@@ -4,7 +4,7 @@ import { z } from 'zod'
  * Cover letter request schema
  */
 export const coverLetterRequestSchema = z.object({
-  profileId: z.string(),
+  profile_id: z.string(),
   tone: z.enum(['professional', 'friendly', 'enthusiastic']).optional().default('professional'),
   emphasis: z.array(z.string()).optional()  // Specific skills to highlight
 })

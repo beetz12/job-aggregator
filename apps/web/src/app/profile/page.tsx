@@ -33,10 +33,10 @@ export default function ProfilePage() {
     name: '',
     email: '',
     skills: [],
-    experienceYears: 0,
-    seniorityLevel: 'mid',
-    remotePreference: 'flexible',
-    preferredLocations: [],
+    experience_years: 0,
+    seniority_level: 'mid',
+    remote_preference: 'flexible',
+    preferred_locations: [],
   })
 
   const [skillInput, setSkillInput] = useState('')
@@ -50,10 +50,10 @@ export default function ProfilePage() {
         name: existingProfile.name,
         email: existingProfile.email,
         skills: existingProfile.skills,
-        experienceYears: existingProfile.experienceYears,
-        seniorityLevel: existingProfile.seniorityLevel,
-        remotePreference: existingProfile.remotePreference,
-        preferredLocations: existingProfile.preferredLocations,
+        experience_years: existingProfile.experience_years,
+        seniority_level: existingProfile.seniority_level,
+        remote_preference: existingProfile.remote_preference,
+        preferred_locations: existingProfile.preferred_locations,
       })
     }
   }, [existingProfile])
@@ -69,7 +69,7 @@ export default function ProfilePage() {
     const { name, value } = e.target
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'experienceYears' ? parseInt(value) || 0 : value,
+      [name]: name === 'experience_years' ? parseInt(value) || 0 : value,
     }))
   }
 
@@ -98,10 +98,10 @@ export default function ProfilePage() {
     if (e.key === 'Enter' && locationInput.trim()) {
       e.preventDefault()
       const newLocation = locationInput.trim()
-      if (!formData.preferredLocations.includes(newLocation)) {
+      if (!formData.preferred_locations.includes(newLocation)) {
         setFormData((prev) => ({
           ...prev,
-          preferredLocations: [...prev.preferredLocations, newLocation],
+          preferred_locations: [...prev.preferred_locations, newLocation],
         }))
       }
       setLocationInput('')
@@ -111,7 +111,7 @@ export default function ProfilePage() {
   const handleRemoveLocation = (locationToRemove: string) => {
     setFormData((prev) => ({
       ...prev,
-      preferredLocations: prev.preferredLocations.filter(
+      preferred_locations: prev.preferred_locations.filter(
         (loc) => loc !== locationToRemove
       ),
     }))
@@ -239,16 +239,16 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
                 <label
-                  htmlFor="experienceYears"
+                  htmlFor="experience_years"
                   className="block text-sm font-medium text-gray-300 mb-2"
                 >
                   Years of Experience
                 </label>
                 <input
                   type="number"
-                  id="experienceYears"
-                  name="experienceYears"
-                  value={formData.experienceYears}
+                  id="experience_years"
+                  name="experience_years"
+                  value={formData.experience_years}
                   onChange={handleInputChange}
                   min="0"
                   max="50"
@@ -258,15 +258,15 @@ export default function ProfilePage() {
 
               <div>
                 <label
-                  htmlFor="seniorityLevel"
+                  htmlFor="seniority_level"
                   className="block text-sm font-medium text-gray-300 mb-2"
                 >
                   Seniority Level
                 </label>
                 <select
-                  id="seniorityLevel"
-                  name="seniorityLevel"
-                  value={formData.seniorityLevel}
+                  id="seniority_level"
+                  name="seniority_level"
+                  value={formData.seniority_level}
                   onChange={handleInputChange}
                   className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
@@ -282,15 +282,15 @@ export default function ProfilePage() {
             {/* Remote Preference */}
             <div>
               <label
-                htmlFor="remotePreference"
+                htmlFor="remote_preference"
                 className="block text-sm font-medium text-gray-300 mb-2"
               >
                 Remote Preference
               </label>
               <select
-                id="remotePreference"
-                name="remotePreference"
-                value={formData.remotePreference}
+                id="remote_preference"
+                name="remote_preference"
+                value={formData.remote_preference}
                 onChange={handleInputChange}
                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
@@ -369,9 +369,9 @@ export default function ProfilePage() {
                 className="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="e.g., San Francisco, New York, Remote..."
               />
-              {formData.preferredLocations.length > 0 && (
+              {formData.preferred_locations.length > 0 && (
                 <div className="flex flex-wrap gap-2 mt-3">
-                  {formData.preferredLocations.map((location) => (
+                  {formData.preferred_locations.map((location) => (
                     <span
                       key={location}
                       className="inline-flex items-center bg-green-600/20 text-green-400 px-3 py-1.5 rounded-lg text-sm"

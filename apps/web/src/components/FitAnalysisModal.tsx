@@ -142,19 +142,19 @@ export default function FitAnalysisModal({
                 {/* Fit Score Summary */}
                 <div className="flex items-center gap-4 p-4 bg-gray-900 rounded-lg">
                   <div className="flex flex-col items-center justify-center w-24 h-24 rounded-full bg-gray-800 border-4 border-blue-500">
-                    <span className="text-2xl font-bold text-white">{fitAnalysis.fitScore.composite}</span>
+                    <span className="text-2xl font-bold text-white">{fitAnalysis.fit_score.composite}</span>
                     <span className="text-xs text-gray-400">/ 100</span>
                   </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className={`px-3 py-1 rounded-full text-sm font-bold ${getRecommendationColor(fitAnalysis.fitScore.recommendation)}`}>
-                        {fitAnalysis.fitScore.recommendation.replace('_', ' ')}
+                      <span className={`px-3 py-1 rounded-full text-sm font-bold ${getRecommendationColor(fitAnalysis.fit_score.recommendation)}`}>
+                        {fitAnalysis.fit_score.recommendation.replace('_', ' ')}
                       </span>
                       <span className="text-sm text-gray-400">
-                        {fitAnalysis.fitScore.confidence}% confidence
+                        {fitAnalysis.fit_score.confidence}% confidence
                       </span>
                     </div>
-                    <p className="text-gray-300">{fitAnalysis.fitScore.reasoning}</p>
+                    <p className="text-gray-300">{fitAnalysis.fit_score.reasoning}</p>
                   </div>
                 </div>
 
@@ -162,26 +162,26 @@ export default function FitAnalysisModal({
                 <div className="bg-gray-900 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                     Company Insights
-                    <span className={`text-sm ${getCompanyRecColor(fitAnalysis.companyInsights.recommendation)}`}>
-                      ({fitAnalysis.companyInsights.recommendation.replace('_', ' ')})
+                    <span className={`text-sm ${getCompanyRecColor(fitAnalysis.company_insights.recommendation)}`}>
+                      ({fitAnalysis.company_insights.recommendation.replace('_', ' ')})
                     </span>
                   </h3>
 
                   <div className="space-y-2 mb-4">
-                    <ScoreBar label="Compensation" score={fitAnalysis.companyInsights.scores.compensation} maxScore={20} />
-                    <ScoreBar label="Culture" score={fitAnalysis.companyInsights.scores.culture} maxScore={25} />
-                    <ScoreBar label="Family-Friendly" score={fitAnalysis.companyInsights.scores.familyFriendliness} maxScore={20} />
-                    <ScoreBar label="Technical Fit" score={fitAnalysis.companyInsights.scores.technicalFit} maxScore={15} />
-                    <ScoreBar label="Industry" score={fitAnalysis.companyInsights.scores.industry} maxScore={10} />
-                    <ScoreBar label="Long-term" score={fitAnalysis.companyInsights.scores.longTermPotential} maxScore={10} />
+                    <ScoreBar label="Compensation" score={fitAnalysis.company_insights.scores.compensation} maxScore={20} />
+                    <ScoreBar label="Culture" score={fitAnalysis.company_insights.scores.culture} maxScore={25} />
+                    <ScoreBar label="Family-Friendly" score={fitAnalysis.company_insights.scores.family_friendliness} maxScore={20} />
+                    <ScoreBar label="Technical Fit" score={fitAnalysis.company_insights.scores.technical_fit} maxScore={15} />
+                    <ScoreBar label="Industry" score={fitAnalysis.company_insights.scores.industry} maxScore={10} />
+                    <ScoreBar label="Long-term" score={fitAnalysis.company_insights.scores.long_term_potential} maxScore={10} />
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {fitAnalysis.companyInsights.greenFlags.length > 0 && (
+                    {fitAnalysis.company_insights.green_flags.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-green-400 mb-2">Green Flags</h4>
                         <ul className="space-y-1">
-                          {fitAnalysis.companyInsights.greenFlags.map((flag, i) => (
+                          {fitAnalysis.company_insights.green_flags.map((flag, i) => (
                             <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
                               <span className="text-green-400">+</span>
                               {flag}
@@ -190,11 +190,11 @@ export default function FitAnalysisModal({
                         </ul>
                       </div>
                     )}
-                    {fitAnalysis.companyInsights.redFlags.length > 0 && (
+                    {fitAnalysis.company_insights.red_flags.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-red-400 mb-2">Red Flags</h4>
                         <ul className="space-y-1">
-                          {fitAnalysis.companyInsights.redFlags.map((flag, i) => (
+                          {fitAnalysis.company_insights.red_flags.map((flag, i) => (
                             <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
                               <span className="text-red-400">-</span>
                               {flag}
@@ -209,15 +209,15 @@ export default function FitAnalysisModal({
                 {/* Match Analysis */}
                 <div className="bg-gray-900 rounded-lg p-4">
                   <h3 className="text-lg font-semibold text-white mb-3">
-                    Skills Match ({fitAnalysis.matchAnalysis.overallMatch}%)
+                    Skills Match ({fitAnalysis.match_analysis.overall_match}%)
                   </h3>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {fitAnalysis.matchAnalysis.strongMatches.length > 0 && (
+                    {fitAnalysis.match_analysis.strong_matches.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-green-400 mb-2">Strong Matches</h4>
                         <div className="flex flex-wrap gap-1">
-                          {fitAnalysis.matchAnalysis.strongMatches.map((skill, i) => (
+                          {fitAnalysis.match_analysis.strong_matches.map((skill, i) => (
                             <span key={i} className="bg-green-900/50 text-green-300 text-xs px-2 py-1 rounded">
                               {skill}
                             </span>
@@ -225,11 +225,11 @@ export default function FitAnalysisModal({
                         </div>
                       </div>
                     )}
-                    {fitAnalysis.matchAnalysis.gaps.length > 0 && (
+                    {fitAnalysis.match_analysis.gaps.length > 0 && (
                       <div>
                         <h4 className="text-sm font-medium text-yellow-400 mb-2">Gaps to Address</h4>
                         <div className="flex flex-wrap gap-1">
-                          {fitAnalysis.matchAnalysis.gaps.map((gap, i) => (
+                          {fitAnalysis.match_analysis.gaps.map((gap, i) => (
                             <span key={i} className="bg-yellow-900/50 text-yellow-300 text-xs px-2 py-1 rounded">
                               {gap}
                             </span>
@@ -241,11 +241,11 @@ export default function FitAnalysisModal({
                 </div>
 
                 {/* Talking Points */}
-                {fitAnalysis.talkingPoints.length > 0 && (
+                {fitAnalysis.talking_points.length > 0 && (
                   <div className="bg-gray-900 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-white mb-3">Talking Points</h3>
                     <ul className="space-y-2">
-                      {fitAnalysis.talkingPoints.map((point, i) => (
+                      {fitAnalysis.talking_points.map((point, i) => (
                         <li key={i} className="text-sm text-gray-300 flex items-start gap-2">
                           <span className="text-blue-400 mt-0.5">&#x2022;</span>
                           {point}
@@ -256,11 +256,11 @@ export default function FitAnalysisModal({
                 )}
 
                 {/* Interview Questions */}
-                {fitAnalysis.interviewQuestions.length > 0 && (
+                {fitAnalysis.interview_questions.length > 0 && (
                   <div className="bg-gray-900 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-white mb-3">Prepare for These Questions</h3>
                     <ol className="space-y-2 list-decimal list-inside">
-                      {fitAnalysis.interviewQuestions.map((question, i) => (
+                      {fitAnalysis.interview_questions.map((question, i) => (
                         <li key={i} className="text-sm text-gray-300">
                           {question}
                         </li>
@@ -312,13 +312,13 @@ export default function FitAnalysisModal({
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold text-white">Tailored Resume</h3>
                     <span className="bg-green-900/50 text-green-400 text-sm px-3 py-1 rounded">
-                      ATS Score: {applicationKit.resume.atsScore}%
+                      ATS Score: {applicationKit.resume.ats_score}%
                     </span>
                   </div>
                   <div className="mb-3">
                     <h4 className="text-sm font-medium text-gray-400 mb-2">Highlighted Skills</h4>
                     <div className="flex flex-wrap gap-1">
-                      {applicationKit.resume.highlightedSkills.map((skill, i) => (
+                      {applicationKit.resume.highlighted_skills.map((skill, i) => (
                         <span key={i} className="bg-blue-900/50 text-blue-300 text-xs px-2 py-1 rounded">
                           {skill}
                         </span>
@@ -337,13 +337,13 @@ export default function FitAnalysisModal({
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="text-lg font-semibold text-white">Cover Letter</h3>
                     <span className="bg-purple-900/50 text-purple-400 text-sm px-3 py-1 rounded capitalize">
-                      {applicationKit.coverLetter.hookType.replace('_', ' ')} Hook
+                      {applicationKit.cover_letter.hook_type.replace('_', ' ')} Hook
                     </span>
                   </div>
                   <div className="mb-3">
                     <h4 className="text-sm font-medium text-gray-400 mb-2">Key Points</h4>
                     <div className="flex flex-wrap gap-1">
-                      {applicationKit.coverLetter.keyPoints.map((point, i) => (
+                      {applicationKit.cover_letter.key_points.map((point, i) => (
                         <span key={i} className="bg-purple-900/50 text-purple-300 text-xs px-2 py-1 rounded">
                           {point}
                         </span>
@@ -352,17 +352,17 @@ export default function FitAnalysisModal({
                   </div>
                   <div className="bg-gray-800 rounded p-4 max-h-64 overflow-y-auto">
                     <pre className="text-sm text-gray-300 whitespace-pre-wrap">
-                      {applicationKit.coverLetter.markdown}
+                      {applicationKit.cover_letter.markdown}
                     </pre>
                   </div>
                 </div>
 
                 {/* Question Answers */}
-                {applicationKit.questionAnswers && applicationKit.questionAnswers.length > 0 && (
+                {applicationKit.question_answers && applicationKit.question_answers.length > 0 && (
                   <div className="bg-gray-900 rounded-lg p-4">
                     <h3 className="text-lg font-semibold text-white mb-3">Application Q&A</h3>
                     <div className="space-y-4">
-                      {applicationKit.questionAnswers.map((qa, i) => (
+                      {applicationKit.question_answers.map((qa, i) => (
                         <div key={i} className="border-l-2 border-blue-500 pl-4">
                           <p className="text-sm font-medium text-gray-300 mb-1">{qa.question}</p>
                           <p className="text-sm text-gray-400">{qa.answer}</p>
@@ -384,7 +384,7 @@ export default function FitAnalysisModal({
                     Copy Resume
                   </button>
                   <button
-                    onClick={() => navigator.clipboard.writeText(applicationKit.coverLetter.markdown)}
+                    onClick={() => navigator.clipboard.writeText(applicationKit.cover_letter.markdown)}
                     className="bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg transition-colors flex items-center gap-2"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

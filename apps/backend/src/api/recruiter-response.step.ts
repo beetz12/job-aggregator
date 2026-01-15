@@ -83,10 +83,10 @@ export const handler: Handlers['RecruiterResponse'] = async (req, { state, logge
       url: '',
       source: 'arbeitnow' as const,
       remote: false,
-      postedAt: new Date().toISOString(),
-      fetchedAt: new Date().toISOString(),
+      posted_at: new Date().toISOString(),
+      fetched_at: new Date().toISOString(),
       tags: [],
-      healthScore: 50
+      health_score: 50
     }
 
     // Run the job matching orchestrator with recruiter_response intent

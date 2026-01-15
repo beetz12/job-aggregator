@@ -15,8 +15,8 @@ import type { UserProfile } from '../types/job-matching'
 
 // Request schema
 const generateApplicationRequestSchema = z.object({
-  profileId: z.string(),
-  applicationQuestions: z.array(z.string()).optional()
+  profile_id: z.string(),
+  application_questions: z.array(z.string()).optional()
 })
 
 // Response schemas matching frontend ApplicationKitResult type
@@ -82,15 +82,15 @@ function profileToUserProfile(profile: Profile): UserProfile {
     experience: [],  // Profile doesn't have experience details, add later if needed
     education: [],   // Profile doesn't have education details, add later if needed
     preferences: {
-      remotePreference: profile.remotePreference,
-      locations: profile.preferredLocations,
-      minSalary: profile.salaryExpectation?.min,
-      maxSalary: profile.salaryExpectation?.max,
-      currency: profile.salaryExpectation?.currency
+      remote_preference: profile.remote_preference,
+      locations: profile.preferred_locations,
+      minSalary: profile.salary_expectation?.min,
+      maxSalary: profile.salary_expectation?.max,
+      currency: profile.salary_expectation?.currency
     },
     voiceStyle: 'professional',
-    createdAt: profile.createdAt,
-    updatedAt: profile.updatedAt
+    created_at: profile.created_at,
+    updated_at: profile.updated_at
   }
 }
 
@@ -343,7 +343,7 @@ export const handler: Handlers['GenerateApplication'] = async (req, { state, log
     throw error
   }
 
-  const { profileId, applicationQuestions } = validatedBody
+  const { profile_id, application_questions } = validatedBody
 
   // Fetch job from state
   const job = await state.get<Job>('jobs', jobId)
@@ -356,9 +356,9 @@ export const handler: Handlers['GenerateApplication'] = async (req, { state, log
   }
 
   // Fetch profile from state
-  const profile = await state.get<Profile>('profiles', profileId)
+  const profile = await state.get<Profile>('profiles', profile_id)
   if (!profile) {
-    logger.warn('Profile not found', { profileId })
+    logger.warn('Profile not found', { profile_id })
     return {
       status: 404,
       body: { error: 'Profile not found' }
@@ -368,9 +368,9 @@ export const handler: Handlers['GenerateApplication'] = async (req, { state, log
   logger.info('Generating application materials', {
     jobId,
     jobTitle: job.title,
-    profileId,
+    profile_id,
     profileName: profile.name,
-    questionCount: applicationQuestions?.length || 0
+    questionCount: application_questions?.length || 0
   })
 
   try {
@@ -380,13 +380,13 @@ export const handler: Handlers['GenerateApplication'] = async (req, { state, log
     const applicationKit = await generateApplicationMaterials(
       job,
       userProfile,
-      applicationQuestions,
+      application_questions,
       now
     )
 
     logger.info('Application materials generated', {
       jobId,
-      profileId,
+      profile_id,
       hasResume: true,
       hasCoverLetter: true,
       questionAnswersCount: applicationKit.questionAnswers?.length || 0,
@@ -399,7 +399,7 @@ export const handler: Handlers['GenerateApplication'] = async (req, { state, log
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
-    logger.error('Failed to generate application', { jobId, profileId, error: errorMessage })
+    logger.error('Failed to generate application', { jobId, profile_id, error: errorMessage })
 
     return {
       status: 500,
