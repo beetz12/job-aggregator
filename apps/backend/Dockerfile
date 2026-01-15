@@ -6,7 +6,7 @@ WORKDIR /app
 
 # Install ALL Dependencies (need dev deps for TypeScript build)
 COPY package*.json ./
-RUN npm ci
+RUN npm install
 
 # Copy Python requirements and install
 COPY requirements.txt ./
