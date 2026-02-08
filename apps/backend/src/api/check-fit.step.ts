@@ -393,7 +393,7 @@ export const handler: Handlers['CheckFit'] = async (req, { state, logger }) => {
       logger.error('Validation failed', { error: error.message })
       return {
         status: 400,
-        body: { error: `Validation failed: ${error.errors.map(e => e.message).join(', ')}` }
+        body: { error: `Validation failed: ${error.issues.map((e: { message: string }) => e.message).join(', ')}` }
       }
     }
     throw error

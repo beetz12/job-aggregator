@@ -128,7 +128,7 @@ export const handler: Handlers['ApplicationGenerated'] = async (input, { state, 
     await state.set('user-applications', userId, userApplications)
 
     // Emit documents-saved event
-    await emit({
+    await (emit as any)({
       topic: 'documents-saved',
       data: {
         applicationId,

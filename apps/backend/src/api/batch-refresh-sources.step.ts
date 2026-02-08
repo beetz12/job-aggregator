@@ -109,7 +109,7 @@ export const handler: Handlers['BatchRefreshSources'] = async (req, { emit, logg
           await emit({
             topic: 'normalize-job',
             data: {
-              source,
+              source: source as typeof SCRAPER_SOURCES[number],
               rawJob,
               fetchedAt: response.scraped_at
             }

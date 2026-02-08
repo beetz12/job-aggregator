@@ -23,7 +23,6 @@ import {
 } from '../services/computer-use'
 import type { Application } from '../types/application'
 import type { Job } from '../types/job'
-import type { Profile } from '../types/profile'
 
 // ============================================================================
 // Schemas
@@ -82,7 +81,7 @@ export const handler: Handlers['AutoApplyHandler'] = async (
   const applicationId = parsedInput.applicationId
   const application = parsedInput.application as Application
   const job = parsedInput.job as Job
-  const profile = parsedInput.profile as Profile
+  const profile = parsedInput.profile as any
   const data = { ...parsedInput, application, job, profile }
 
   logger.info('Auto-apply handler started', {
@@ -139,7 +138,7 @@ export const handler: Handlers['AutoApplyHandler'] = async (
         })
 
         // Emit checkpoint event to frontend
-        await emit({
+        await (emit as any)({
           topic: 'auto-apply-checkpoint',
           data: {
             applicationId,
@@ -195,7 +194,7 @@ export const handler: Handlers['AutoApplyHandler'] = async (
 
       // Progress callback - emit progress events
       onProgress: async (step: number, action: string, reason: string) => {
-        await emit({
+        await (emit as any)({
           topic: 'auto-apply-progress',
           data: {
             applicationId,
@@ -219,7 +218,7 @@ export const handler: Handlers['AutoApplyHandler'] = async (
 
     // Update application status based on result
     const now = new Date().toISOString()
-    const finalStatus = result.success ? 'applied' : 'error'
+    const finalStatus = result.success ? 'applied' : 'failed'
 
     const updatedApplication: Application = {
       ...application,
@@ -231,7 +230,7 @@ export const handler: Handlers['AutoApplyHandler'] = async (
     await state.set('applications', applicationId, updatedApplication)
 
     // Emit completion event
-    await emit({
+    await (emit as any)({
       topic: 'auto-apply-complete',
       data: {
         applicationId,
@@ -262,14 +261,14 @@ export const handler: Handlers['AutoApplyHandler'] = async (
     // Update application status to error
     const updatedApplication: Application = {
       ...application,
-      status: 'error',
+      status: 'failed',
       updated_at: new Date().toISOString(),
     }
 
     await state.set('applications', applicationId, updatedApplication)
 
     // Emit error event
-    await emit({
+    await (emit as any)({
       topic: 'auto-apply-error',
       data: {
         applicationId,

@@ -335,11 +335,11 @@ export async function scrapeWellfound(
     }
 
     console.log(`[Wellfound] Scraping complete. Found ${allJobs.length} total jobs`)
-    return allJobs.slice(0, maxJobs)
+    return { jobs: allJobs.slice(0, maxJobs), status: 'success' as const }
 
   } catch (error) {
     console.error('[Wellfound] Scraping error:', error instanceof Error ? error.message : error)
-    return allJobs // Return whatever we got
+    return { jobs: allJobs, status: 'error' as const, message: error instanceof Error ? error.message : 'Unknown error' }
   }
 }
 
@@ -349,9 +349,9 @@ export async function scrapeWellfound(
 export async function testWellfoundScraper(): Promise<boolean> {
   try {
     console.log('[Wellfound] Running scraper test...')
-    const jobs = await scrapeWellfound('engineer', 'Remote', 5)
-    console.log(`[Wellfound] Test complete. Found ${jobs.length} jobs`)
-    return jobs.length > 0
+    const result = await scrapeWellfound('engineer', 'Remote', 5)
+    console.log(`[Wellfound] Test complete. Found ${result.jobs.length} jobs`)
+    return result.jobs.length > 0
   } catch (error) {
     console.error('[Wellfound] Test failed:', error)
     return false

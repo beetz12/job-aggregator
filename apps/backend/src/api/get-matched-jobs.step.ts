@@ -130,7 +130,7 @@ export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('Failed to fetch matched jobs', { profile_id, error: errorMessage })
     return {
-      status: 500,
+      status: 404,
       body: { error: 'Failed to fetch matched jobs' }
     }
   }

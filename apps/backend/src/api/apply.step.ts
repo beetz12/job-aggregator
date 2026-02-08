@@ -128,12 +128,12 @@ export const handler: Handlers['Apply'] = async (req, { state, emit, logger }) =
     }
   } catch (error) {
     if (error instanceof ZodError) {
-      logger.error('Validation failed', { errors: error.errors })
+      logger.error('Validation failed', { errors: error.issues })
       return {
         status: 400,
         body: {
           error: 'Validation failed',
-          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+          details: error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
         }
       }
     }

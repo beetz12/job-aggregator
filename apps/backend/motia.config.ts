@@ -24,7 +24,7 @@ export default defineConfig({
     // ==========================================================================
     // ULTRA-SIMPLE PING ENDPOINT - Returns plain text, no JSON parsing
     // ==========================================================================
-    app.get('/ping', (_req, res) => {
+    app.get('/ping', (_req: any, res: any) => {
       console.log('[Ping] /ping endpoint hit')
       res.setHeader('Content-Type', 'text/plain')
       res.status(200).send('pong')
@@ -34,7 +34,7 @@ export default defineConfig({
     // FAILSAFE HEALTH CHECK - Must respond even if other parts of the app fail
     // This is the FIRST route registered to ensure it always works
     // ==========================================================================
-    app.get('/healthz', (_req, res) => {
+    app.get('/healthz', (_req: any, res: any) => {
       try {
         console.log('[Health] /healthz endpoint hit')
         res.status(200).json({
@@ -59,7 +59,7 @@ export default defineConfig({
     })
 
     // Enable CORS for all routes - handles preflight OPTIONS requests automatically
-    app.use((_req, res, next) => {
+    app.use((_req: any, res: any, next: any) => {
       res.header('Access-Control-Allow-Origin', '*')
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS')
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
@@ -68,7 +68,7 @@ export default defineConfig({
     })
 
     // Handle preflight OPTIONS requests
-    app.options('*', (_req, res) => {
+    app.options('*', (_req: any, res: any) => {
       res.status(204).send('')
     })
 

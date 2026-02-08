@@ -60,7 +60,7 @@ export const handler: Handlers['GetProfile'] = async (req, { state, logger }) =>
     const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     logger.error('Failed to fetch profile', { profile_id: id, error: errorMessage })
     return {
-      status: 500,
+      status: 404,
       body: { error: 'Failed to fetch profile' }
     }
   }

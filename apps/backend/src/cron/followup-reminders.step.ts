@@ -20,8 +20,8 @@ export const handler: Handlers['FollowUpReminders'] = async ({ emit, logger, sta
 
   // Filter applications that:
   // 1. Have status 'applied'
-  // 2. Have appliedAt date that is 7+ days ago
-  // 3. Don't have a followUpDate set
+  // 2. Have applied_at date that is 7+ days ago
+  // 3. Don't have a follow_up_date set
   const now = new Date()
   const remindersNeeded: Application[] = []
 
@@ -31,18 +31,18 @@ export const handler: Handlers['FollowUpReminders'] = async ({ emit, logger, sta
       continue
     }
 
-    // Skip if appliedAt is not set
-    if (!app.appliedAt) {
+    // Skip if applied_at is not set
+    if (!app.applied_at) {
       continue
     }
 
-    // Skip if followUpDate is already set (user has scheduled their own follow-up)
-    if (app.followUpDate) {
+    // Skip if follow_up_date is already set (user has scheduled their own follow-up)
+    if (app.follow_up_date) {
       continue
     }
 
     // Check if 7+ days have passed since application
-    const appliedDate = new Date(app.appliedAt)
+    const appliedDate = new Date(app.applied_at)
     const daysSinceApplied = Math.floor((now.getTime() - appliedDate.getTime()) / MS_PER_DAY)
 
     if (daysSinceApplied >= DAYS_UNTIL_FOLLOWUP) {
@@ -58,14 +58,14 @@ export const handler: Handlers['FollowUpReminders'] = async ({ emit, logger, sta
 
   // Emit followup-due event for each application needing a reminder
   for (const app of remindersNeeded) {
-    const appliedDate = new Date(app.appliedAt!)
+    const appliedDate = new Date(app.applied_at!)
     const daysSinceApplied = Math.floor((now.getTime() - appliedDate.getTime()) / MS_PER_DAY)
 
     logger.info('Follow-up reminder due', {
       applicationId: app.id,
       company: app.company,
-      jobTitle: app.jobTitle,
-      appliedAt: app.appliedAt,
+      jobTitle: app.job_title,
+      appliedAt: app.applied_at,
       daysSinceApplied
     })
 
@@ -74,10 +74,10 @@ export const handler: Handlers['FollowUpReminders'] = async ({ emit, logger, sta
       topic: 'followup-due',
       data: {
         applicationId: app.id,
-        jobId: app.jobId,
+        jobId: app.job_id,
         company: app.company,
-        jobTitle: app.jobTitle,
-        appliedAt: app.appliedAt,
+        jobTitle: app.job_title,
+        appliedAt: app.applied_at || '',
         daysSinceApplied
       }
     })

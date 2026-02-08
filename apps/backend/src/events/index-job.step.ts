@@ -43,7 +43,8 @@ function generateDuplicateHash(job: Job): string {
 }
 
 export const handler: Handlers['IndexJob'] = async (input, { state, streams, logger, emit }) => {
-  const { job } = input
+  const { job: rawJob } = input
+  const job = rawJob as Job
   const duplicateHash = generateDuplicateHash(job)
   const enhancedHash = generateShortHash(job)
 
@@ -251,7 +252,7 @@ export const handler: Handlers['IndexJob'] = async (input, { state, streams, log
   await state.set('job-hashes', duplicateHash, job.id)
 
   // Index the enhanced hash for future dedup checks
-  await indexJobHash(job, state)
+  await indexJobHash(job, state as any)
 
   // =========================================================================
   // STEP 5: Stream to connected clients (real-time updates)

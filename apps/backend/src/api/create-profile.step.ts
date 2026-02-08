@@ -84,10 +84,10 @@ export const handler: Handlers['CreateProfile'] = async (req, { state, emit, log
     }
   } catch (error) {
     if (error instanceof ZodError) {
-      logger.error('Validation failed', { errors: error.errors })
+      logger.error('Validation failed', { errors: error.issues })
       return {
         status: 400,
-        body: { error: 'Validation failed: ' + error.errors.map(e => e.message).join(', ') }
+        body: { error: 'Validation failed: ' + error.issues.map((e: { message: string }) => e.message).join(', ') }
       }
     }
 

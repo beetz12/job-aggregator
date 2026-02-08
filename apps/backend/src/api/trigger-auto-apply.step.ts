@@ -88,7 +88,7 @@ export const handler: Handlers['TriggerAutoApply'] = async (req, { state, emit, 
     await state.set('applications', id, updatedApplication)
 
     // 6. Emit 'auto-apply-started' event with application data
-    await emit({
+    await (emit as any)({
       topic: 'auto-apply-started',
       data: {
         applicationId: id,
@@ -122,7 +122,7 @@ export const handler: Handlers['TriggerAutoApply'] = async (req, { state, emit, 
       logger.error('Validation failed', { error: error.message })
       return {
         status: 400,
-        body: { error: 'Validation failed: ' + error.errors.map(e => e.message).join(', ') }
+        body: { error: 'Validation failed: ' + error.issues.map((e: { message: string }) => e.message).join(', ') }
       }
     }
     throw error

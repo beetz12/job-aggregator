@@ -96,7 +96,7 @@ export const handler: Handlers['MatchComplete'] = async (input, { state, emit, l
     })
 
     // Emit notification sent event
-    await emit({
+    await (emit as any)({
       topic: 'notification-sent',
       data: {
         notificationId,

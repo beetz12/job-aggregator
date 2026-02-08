@@ -242,7 +242,7 @@ export const handler: Handlers['GenerateCustomResume'] = async (input, { state, 
     const skillMatches = calculateSkillMatches(profile.skills || [], techStack)
 
     const customResumeMarkdown = generateResumeMarkdown(profile, skillMatches, job)
-    const customCoverLetterMarkdown = generateCoverLetterMarkdown(profile, skillMatches, job)
+    const customCoverLetterMarkdown = generateCoverLetterMarkdown(profile, job, skillMatches)
 
     const now = new Date().toISOString()
 
@@ -271,7 +271,7 @@ export const handler: Handlers['GenerateCustomResume'] = async (input, { state, 
     })
 
     // 6. Emit resume-generated event
-    await emit({
+    await (emit as any)({
       topic: 'resume-generated',
       data: {
         applicationId,

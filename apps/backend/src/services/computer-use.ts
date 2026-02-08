@@ -733,9 +733,9 @@ async function executeAction(
     }
 
     case 'scroll': {
-      const scrollAmount = action.amount || 500
-      const scrollDir = action.direction === 'up' ? -scrollAmount : scrollAmount
-      await page.evaluate((amount) => window.scrollBy(0, amount), scrollDir)
+      const scrollAmount = (action.amount as number) || 500
+      const scrollDir: number = action.direction === 'up' ? -scrollAmount : scrollAmount
+      await page.evaluate(`window.scrollBy(0, ${scrollDir})`)
       await page.waitForTimeout(300)
       return { done: false, checkpoint: false }
     }

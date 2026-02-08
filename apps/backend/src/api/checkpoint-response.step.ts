@@ -135,7 +135,7 @@ export const handler: Handlers['CheckpointResponse'] = async (
       return {
         status: 400,
         body: {
-          error: 'Validation failed: ' + error.errors.map((e) => e.message).join(', '),
+          error: 'Validation failed: ' + error.issues.map((e: { message: string }) => e.message).join(', '),
         },
       }
     }

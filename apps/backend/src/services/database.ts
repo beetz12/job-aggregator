@@ -57,8 +57,8 @@ function mapDbRowToJob(row: Record<string, unknown>): Job {
     company_url: row.company_url as string | undefined,
     location_parsed: row.location_parsed as Job['location_parsed'],
     salary: row.salary as Job['salary'],
-    employment_type: row.employment_type as string | undefined,
-    experience_level: row.experience_level as string | undefined,
+    employment_type: row.employment_type as Job['employment_type'],
+    experience_level: row.experience_level as Job['experience_level'],
     content_hash: row.content_hash as string | undefined,
   }
 }

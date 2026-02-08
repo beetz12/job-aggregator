@@ -529,6 +529,109 @@ Designed with graceful degradation - the app works without AI keys, just skips s
 
 ---
 
+## Claude Code Skills (Ad-Hoc Automation)
+
+Three Claude Code skills provide on-demand access to the email automation pipeline. These wrap the scripts in `~/.openclaw/workspace/` and can be invoked from any Claude Code session.
+
+### `/screen-newsletters` — AI Newsletter Screening
+
+Searches Gmail for AI newsletters and sends Telegram/email notifications.
+
+```bash
+# Check for newsletters from the last 6 hours (default)
+/screen-newsletters
+
+# Look back 12 hours
+/screen-newsletters --hours 12
+
+# Dry run — search and analyze without sending notifications
+/screen-newsletters --dry-run
+
+# Only send Telegram alerts (no email)
+/screen-newsletters --notify telegram
+
+# Combine flags
+/screen-newsletters --hours 24 --dry-run --notify none
+```
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--hours <n>` | 6 | Email lookback window in hours |
+| `--dry-run` | false | Analyze without sending notifications |
+| `--notify <channel>` | both | `telegram`, `email`, `both`, or `none` |
+
+### `/screen-jobs` — LinkedIn Job Pipeline
+
+Parses LinkedIn job alert emails, evaluates fit, ingests to the job platform API, refreshes scrapers, scores, and verifies active jobs.
+
+```bash
+# Run the full pipeline (default 6h lookback, 80+ score threshold)
+/screen-jobs
+
+# Quick email-only run — skip scrapers, scoring, and verification
+/screen-jobs --skip-scrapers --skip-scoring --skip-verify
+
+# Lower the recommendation threshold to 60
+/screen-jobs --min-score 60
+
+# Dry run with 12-hour lookback
+/screen-jobs --hours 12 --dry-run
+
+# Combine flags
+/screen-jobs --hours 24 --min-score 70 --notify telegram --skip-verify
+```
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `--hours <n>` | 6 | Email lookback window in hours |
+| `--dry-run` | false | Parse jobs without sending notifications or calling APIs |
+| `--notify <channel>` | both | `telegram`, `email`, `both`, or `none` |
+| `--min-score <n>` | 80 | Minimum score for "recommended" jobs |
+| `--skip-scrapers` | false | Skip the 16+ scraper refresh step |
+| `--skip-scoring` | false | Skip batch scoring of new jobs |
+| `--skip-verify` | false | Skip job availability verification |
+
+### `/auto-apply` — Automated Job Applications
+
+Browser-automated job applications using Playwright with AI-tailored resumes.
+
+```bash
+# Check status of favorited jobs
+/auto-apply status
+
+# Dry run — check eligibility without applying
+/auto-apply apply --dry-run
+
+# Apply to all pending favorites
+/auto-apply apply
+
+# Apply to a specific job
+/auto-apply apply --job-id arbeitnow_12345
+
+# View application history
+/auto-apply history --limit 20
+```
+
+| Command | Description |
+|---------|-------------|
+| `apply` | Run auto-apply for pending favorited jobs |
+| `status` | Check status of all favorited jobs |
+| `history` | View auto-application history |
+| `assess` | Assess platform anti-bot protection level |
+
+### Cron Schedules
+
+These skills also run automatically via OpenClaw cron:
+
+| Cron Job | Schedule | Script |
+|----------|----------|--------|
+| `ai-newsletter-screening` | Every 6 hours | `ai-newsletter-screener.js` |
+| `linkedin-job-pipeline` | Every 6 hours | `linkedin-job-pipeline.js` |
+
+Manage cron jobs with `openclaw cron list`, `openclaw cron run <id> --force`, etc.
+
+---
+
 ## License
 
 MIT

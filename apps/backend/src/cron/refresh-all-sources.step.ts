@@ -23,7 +23,7 @@ export const handler: Handlers['RefreshAllSources'] = async ({ emit, logger }) =
 
     await emit({
       topic: 'fetch-jobs-trigger',
-      data: { source, manual: false, limit: 100 }
+      data: { source, manual: false, limit: 100, test_mode: false }
     })
 
     // Add 5 second delay between sources (except after last one)

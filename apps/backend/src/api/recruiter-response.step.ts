@@ -106,12 +106,12 @@ export const handler: Handlers['RecruiterResponse'] = async (req, { state, logge
     }
 
     const jobResult = result.results[0]
-    const email = jobResult.applicationKit.recruiterEmail
+    const email = jobResult.applicationKit!.recruiterEmail
 
     logger.info('Recruiter response generated', {
       userId,
       jobId,
-      responseType: email.type,
+      responseType: email?.type,
       fitScore: jobResult.matchReport.fitScore.composite
     })
 
@@ -119,7 +119,7 @@ export const handler: Handlers['RecruiterResponse'] = async (req, { state, logge
       status: 200,
       body: {
         success: true,
-        email,
+        email: email!,
         matchReport: job ? jobResult.matchReport : undefined,
         jobTitle: job?.title,
         company: job?.company
@@ -127,12 +127,12 @@ export const handler: Handlers['RecruiterResponse'] = async (req, { state, logge
     }
   } catch (error) {
     if (error instanceof ZodError) {
-      logger.error('Validation failed', { errors: error.errors })
+      logger.error('Validation failed', { errors: error.issues })
       return {
         status: 400,
         body: {
           error: 'Validation failed',
-          details: error.errors.map(e => `${e.path.join('.')}: ${e.message}`).join(', ')
+          details: error.issues.map((e: any) => `${e.path.join('.')}: ${e.message}`).join(', ')
         }
       }
     }

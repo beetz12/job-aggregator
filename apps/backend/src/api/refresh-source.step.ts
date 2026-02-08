@@ -40,7 +40,7 @@ export const handler: Handlers['RefreshSource'] = async (req, { emit, logger }) 
 
   await emit({
     topic: 'fetch-jobs-trigger',
-    data: { source: name as typeof VALID_SOURCES[number], manual: true, limit: 100 }
+    data: { source: name as typeof VALID_SOURCES[number], manual: true, limit: 100, test_mode: false }
   })
 
   return {
