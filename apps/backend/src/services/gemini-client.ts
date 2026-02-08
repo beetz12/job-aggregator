@@ -13,6 +13,6 @@ export function getGeminiClient(): GoogleGenerativeAI {
   return client
 }
 
-export function getGeminiModel(modelName = 'gemini-1.5-flash'): GenerativeModel {
+export function getGeminiModel(modelName = 'gemini-2.5-flash-preview-04-17'): GenerativeModel {
   return getGeminiClient().getGenerativeModel({ model: modelName })
 }

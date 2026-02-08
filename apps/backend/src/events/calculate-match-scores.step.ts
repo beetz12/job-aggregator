@@ -2,6 +2,7 @@ import type { EventConfig, Handlers } from 'motia'
 import { z } from 'zod'
 import type { Profile, MatchScore } from '../types/profile'
 import type { Job } from '../types/job'
+import { updateJobScore } from '../services/database'
 
 const inputSchema = z.object({
   profile_id: z.string()
@@ -197,6 +198,14 @@ export const handler: Handlers['CalculateMatchScores'] = async (input, { state, 
       // Store match score with composite key
       const scoreKey = `${profile_id}:${job.id}`
       await state.set('match-scores', scoreKey, matchScore)
+
+      // Persist match_score + score_source = 'keyword' to DB
+      try {
+        await updateJobScore(job.id, matchScore.total_score, 'keyword')
+      } catch (dbError) {
+        // Non-fatal: DB persistence is best-effort
+      }
+
       processedCount++
 
       if (processedCount % 100 === 0) {

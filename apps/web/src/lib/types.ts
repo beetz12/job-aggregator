@@ -109,6 +109,9 @@ export interface Job {
   health_score: number
   content_hash?: string
   ai_summary?: string
+  score_source?: 'keyword' | 'gemini'
+  match_score?: number
+  scored_at?: string
 }
 
 export interface JobsResponse {
@@ -237,6 +240,7 @@ export interface MatchedJobsResponse {
 export interface MatchedJob extends Job {
   match_score: number
   match_reasons: string[]
+  score_source?: 'keyword' | 'gemini'
 }
 
 export type ApplicationStatus =

@@ -127,6 +127,12 @@ export default function JobCard({
                   {effectiveMatchScore}%
                 </span>
               )}
+              {/* AI Score Source Badge */}
+              {'score_source' in job && job.score_source === 'gemini' && (
+                <span className="bg-purple-600 text-white text-xs font-medium px-2 py-0.5 rounded">
+                  AI
+                </span>
+              )}
               <span
                 className={`${
                   SOURCE_COLORS[job.source as JobSource] || 'bg-gray-600'

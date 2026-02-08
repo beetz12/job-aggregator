@@ -89,7 +89,10 @@ export const jobSchema = z.object({
   salary: salarySchema.optional().nullable(),
   employment_type: z.enum(['full-time', 'part-time', 'contract', 'internship']).optional().nullable(),
   experience_level: z.enum(['entry', 'mid', 'senior', 'lead', 'executive']).optional().nullable(),
-  content_hash: z.string().optional().nullable()
+  content_hash: z.string().optional().nullable(),
+  score_source: z.enum(['keyword', 'gemini']).optional().nullable(),
+  match_score: z.number().optional().nullable(),
+  scored_at: z.string().optional().nullable()
 })
 
 export type Job = z.infer<typeof jobSchema>

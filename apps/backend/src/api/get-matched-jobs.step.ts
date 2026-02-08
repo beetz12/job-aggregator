@@ -2,10 +2,12 @@ import type { ApiRouteConfig, Handlers } from 'motia'
 import { z } from 'zod'
 import { jobSchema, type Job } from '../types/job'
 import { matchScoreSchema, type MatchScore, type Profile } from '../types/profile'
+import { query, isDatabaseConfigured } from '../services/postgres'
 
 const matchedJobSchema = z.object({
   job: jobSchema,
-  matchScore: matchScoreSchema
+  matchScore: matchScoreSchema,
+  score_source: z.enum(['keyword', 'gemini']).optional().nullable()
 })
 
 const responseSchema = z.object({
@@ -39,6 +41,7 @@ export const config: ApiRouteConfig = {
 interface MatchedJob {
   job: Job
   matchScore: MatchScore
+  score_source?: 'keyword' | 'gemini' | null
 }
 
 export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }) => {
@@ -61,7 +64,82 @@ export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }
       }
     }
 
-    // Get all match scores for this profile
+    // Try DB-first: query pre-scored jobs directly from PostgreSQL
+    if (isDatabaseConfigured()) {
+      try {
+        const { rows } = await query<Record<string, unknown>>(
+          `SELECT * FROM jobs WHERE match_score IS NOT NULL AND match_score >= $1 ORDER BY match_score DESC LIMIT $2`,
+          [minScoreNum, limitNum]
+        )
+
+        if (rows.length > 0) {
+          const dbMatches: MatchedJob[] = rows.map(row => ({
+            job: {
+              id: row.id as string,
+              title: row.title as string,
+              company: row.company as string,
+              location: row.location as string | undefined,
+              remote: row.remote as boolean,
+              url: row.url as string,
+              description: row.description as string,
+              source: row.source as Job['source'],
+              posted_at: row.posted_at as string,
+              fetched_at: row.fetched_at as string,
+              tags: (row.tags as string[]) || [],
+              health_score: row.health_score as number,
+              ai_summary: row.ai_summary as string | undefined,
+              skills: (row.skills as string[]) || [],
+              source_id: row.source_id as string | undefined,
+              company_url: row.company_url as string | undefined,
+              location_parsed: row.location_parsed as Job['location_parsed'],
+              salary: row.salary as Job['salary'],
+              employment_type: row.employment_type as Job['employment_type'],
+              experience_level: row.experience_level as Job['experience_level'],
+              content_hash: row.content_hash as string | undefined,
+              score_source: row.score_source as Job['score_source'],
+              match_score: row.match_score as number | undefined,
+              scored_at: row.scored_at as string | undefined,
+            },
+            matchScore: {
+              profile_id,
+              job_id: row.id as string,
+              total_score: (row.match_score as number) || 0,
+              breakdown: {
+                skill_score: 0,
+                seniority_score: 0,
+                location_score: 0,
+                salary_score: 0
+              },
+              calculated_at: (row.scored_at as string) || new Date().toISOString()
+            },
+            score_source: row.score_source as 'keyword' | 'gemini' | null
+          }))
+
+          logger.info('Returning matched jobs from DB', {
+            profile_id,
+            totalMatches: dbMatches.length,
+            returnedMatches: dbMatches.length
+          })
+
+          return {
+            status: 200,
+            headers: {
+              'Cache-Control': 'public, max-age=60'
+            },
+            body: {
+              matches: dbMatches,
+              total: dbMatches.length,
+              profile_id
+            }
+          }
+        }
+      } catch (dbError) {
+        const dbErrorMsg = dbError instanceof Error ? dbError.message : 'Unknown DB error'
+        logger.warn('DB query failed, falling back to Motia state', { profile_id, error: dbErrorMsg })
+      }
+    }
+
+    // Fallback: Motia state-based matching
     const allMatchScores = await state.getGroup<MatchScore>('match-scores')
 
     // Filter to only this profile's scores
@@ -94,7 +172,8 @@ export const handler: Handlers['GetMatchedJobs'] = async (req, { state, logger }
       if (job) {
         matchedJobs.push({
           job,
-          matchScore: score
+          matchScore: score,
+          score_source: job.score_source
         })
       }
     }

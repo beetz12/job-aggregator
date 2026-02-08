@@ -9,6 +9,7 @@ import {
   determineShouldApply,
   generateDetailedReasoning
 } from '../services/job-matching/orchestrator'
+import { updateJobScore } from '../services/database'
 
 /**
  * POST /jobs/:id/check-fit
@@ -450,13 +451,21 @@ export const handler: Handlers['CheckFit'] = async (req, { state, logger }) => {
       jobCriteria: job_criteria
     })
 
+    // Persist score_source = 'gemini' to DB
+    try {
+      await updateJobScore(jobId, fitAnalysis.fitScore.composite, 'gemini')
+    } catch (dbError) {
+      logger.warn('Failed to persist score_source to DB', { jobId, error: dbError instanceof Error ? dbError.message : 'Unknown' })
+    }
+
     logger.info('Fit analysis completed', {
       jobId,
       profile_id,
       fitScore: fitAnalysis.fitScore.composite,
       recommendation: fitAnalysis.fitScore.recommendation,
       shouldApply: fitAnalysis.shouldApply,
-      hasCriteriaMatch: !!fitAnalysis.criteriaMatch
+      hasCriteriaMatch: !!fitAnalysis.criteriaMatch,
+      score_source: 'gemini'
     })
 
     return {

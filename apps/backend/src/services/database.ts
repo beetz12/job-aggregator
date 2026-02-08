@@ -60,7 +60,26 @@ function mapDbRowToJob(row: Record<string, unknown>): Job {
     employment_type: row.employment_type as Job['employment_type'],
     experience_level: row.experience_level as Job['experience_level'],
     content_hash: row.content_hash as string | undefined,
+    score_source: row.score_source as Job['score_source'],
+    match_score: row.match_score as number | undefined,
+    scored_at: row.scored_at as string | undefined,
   }
+}
+
+/**
+ * Update job score in database
+ */
+export async function updateJobScore(
+  jobId: string,
+  matchScore: number,
+  scoreSource: 'keyword' | 'gemini'
+): Promise<void> {
+  if (!isSupabaseConfigured()) return
+
+  await query(
+    `UPDATE jobs SET match_score = $1, score_source = $2, scored_at = $3 WHERE id = $4`,
+    [matchScore, scoreSource, new Date().toISOString(), jobId]
+  )
 }
 
 /**
