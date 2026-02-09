@@ -1,11 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useMyProfile, useMatchedJobs } from '@/hooks/useProfile'
 import { useCreateApplication } from '@/hooks/useApplications'
 import { useCheckFit, useGenerateApplication } from '@/hooks/useIntelligentApplication'
 import FitAnalysisModal from '@/components/FitAnalysisModal'
+import { scoreNewJobs } from '@/lib/api'
 import { MatchedJobItem, Job, FitAnalysisResult, ApplicationKitResult } from '@/lib/types'
 
 const sourceColors: Record<string, string> = {
@@ -48,12 +49,14 @@ function MatchedJobCard({
   onCheckFit,
   isSaving,
   isCheckingFit,
+  hasFitResult,
 }: {
   match: MatchedJobItem
   onSave: (job: Job) => void
   onCheckFit: (job: Job) => void
   isSaving: boolean
   isCheckingFit: boolean
+  hasFitResult: boolean
 }) {
   const { job, match_score } = match
   const timeAgo = getTimeAgo(job.posted_at)
@@ -64,6 +67,7 @@ function MatchedJobCard({
   }
 
   const score = match_score.total_score
+  const isGeminiScored = job.score_source === 'gemini'
 
   const matchReasons: string[] = []
   if (match_score.breakdown.skill_score > 30) {
@@ -85,8 +89,21 @@ function MatchedJobCard({
     <div
       className={`bg-gray-800 rounded-lg p-5 border-2 ${getMatchScoreBorderColor(
         score
-      )} hover:border-gray-500 transition-colors`}
+      )} hover:border-gray-500 transition-colors relative ${
+        isCheckingFit ? 'ring-2 ring-purple-500/50 animate-pulse' : ''
+      }`}
     >
+      {/* AI-scored checkmark overlay */}
+      {hasFitResult && (
+        <div className="absolute top-2 right-2 z-10">
+          <div className="bg-green-500 rounded-full p-1" title="AI fit check complete">
+            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-start mb-3">
         <div className="flex-1 min-w-0">
           <Link href={`/jobs/${job.id}`}>
@@ -104,6 +121,11 @@ function MatchedJobCard({
           >
             {score}% Match
           </span>
+          {isGeminiScored && (
+            <span className="bg-purple-600 text-white text-xs font-bold px-2 py-1 rounded" title="AI-scored by Gemini">
+              AI
+            </span>
+          )}
           <span
             className={`${
               sourceColors[job.source] || 'bg-gray-600'
@@ -271,9 +293,77 @@ export default function MatchesPage() {
     message: string
   } | null>(null)
 
+  // Batch AI fit check state
+  const [fitCheckResults, setFitCheckResults] = useState<Record<string, FitAnalysisResult>>({})
+  const [batchProgress, setBatchProgress] = useState<{
+    current: number; total: number; scored: number; skipped: number; failed: number
+  } | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
+  const [isScoringNew, setIsScoringNew] = useState(false)
+
   const showToast = (type: 'success' | 'error', message: string) => {
     setToast({ type, message })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  const handleScoreNewJobs = async () => {
+    if (!profile) return
+    setIsScoringNew(true)
+    try {
+      const result = await scoreNewJobs(profile.id)
+      showToast('success', `Scored ${result.scored} new jobs (${result.skipped} already scored)`)
+    } catch (error) {
+      showToast('error', error instanceof Error ? error.message : 'Failed to score')
+    } finally {
+      setIsScoringNew(false)
+    }
+  }
+
+  const handleFitCheckAll = async () => {
+    if (!profile) return
+    const matches = matchesData?.matches || []
+    const controller = new AbortController()
+    abortControllerRef.current = controller
+
+    // Filter: skip already Gemini-scored OR already fit-checked in this session
+    const toCheck = matches.filter(m =>
+      !fitCheckResults[m.job.id] && m.job.score_source !== 'gemini'
+    )
+    const skipped = matches.length - toCheck.length
+
+    setBatchProgress({ current: 0, total: toCheck.length, scored: 0, skipped, failed: 0 })
+
+    let scored = 0, failed = 0
+    for (let i = 0; i < toCheck.length; i++) {
+      if (controller.signal.aborted) break
+
+      const match = toCheck[i]
+      setBatchProgress(prev => prev ? { ...prev, current: i + 1 } : null)
+      setCheckingFitJobId(match.job.id)
+
+      try {
+        const result = await checkFitMutation.mutateAsync({
+          job_id: match.job.id,
+          profile_id: profile.id,
+        })
+        setFitCheckResults(prev => ({ ...prev, [match.job.id]: result }))
+        scored++
+      } catch {
+        failed++
+      }
+
+      setBatchProgress(prev => prev ? { ...prev, scored, failed } : null)
+    }
+
+    setCheckingFitJobId(null)
+    setBatchProgress(null)
+    abortControllerRef.current = null
+    showToast('success', `AI scored ${scored} jobs. ${skipped} skipped. ${failed} failed.`)
+  }
+
+  const handleCancelBatch = () => {
+    abortControllerRef.current?.abort()
+    setCheckingFitJobId(null)
   }
 
   const handleSaveJob = async (job: Job) => {
@@ -455,25 +545,60 @@ export default function MatchesPage() {
                 {matches.length} jobs matched to your profile
               </p>
             </div>
-            <Link
-              href="/profile"
-              className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2"
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleScoreNewJobs}
+                disabled={isScoringNew || !!batchProgress}
+                className="text-sm border border-blue-500 text-blue-400 hover:bg-blue-500/10 px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                />
-              </svg>
-              Edit Profile
-            </Link>
+                {isScoringNew ? (
+                  <>
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-400" />
+                    Scoring...
+                  </>
+                ) : (
+                  'Score New Jobs'
+                )}
+              </button>
+              {batchProgress ? (
+                <button
+                  onClick={handleCancelBatch}
+                  className="text-sm bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+                >
+                  Cancel
+                </button>
+              ) : (
+                <button
+                  onClick={handleFitCheckAll}
+                  disabled={isScoringNew}
+                  className="text-sm bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  AI Fit Check All
+                </button>
+              )}
+              <Link
+                href="/profile"
+                className="text-sm text-blue-400 hover:text-blue-300 flex items-center gap-2"
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                  />
+                </svg>
+                Edit Profile
+              </Link>
+            </div>
           </div>
 
           {/* Profile Summary */}
@@ -494,6 +619,29 @@ export default function MatchesPage() {
             )}
           </div>
         </div>
+
+        {/* Batch Progress Bar */}
+        {batchProgress && (
+          <div className="mb-4 bg-gray-800 rounded-lg p-4 border border-purple-500/30">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm text-gray-300">
+                AI Fit Check: {batchProgress.current}/{batchProgress.total}
+              </span>
+              <button onClick={handleCancelBatch} className="text-sm text-red-400 hover:text-red-300">
+                Cancel
+              </button>
+            </div>
+            <div className="w-full bg-gray-700 rounded-full h-2">
+              <div
+                className="bg-purple-500 h-2 rounded-full transition-all"
+                style={{ width: `${batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0}%` }}
+              />
+            </div>
+            <div className="mt-1 text-xs text-gray-500">
+              {batchProgress.scored} scored, {batchProgress.skipped} skipped, {batchProgress.failed} failed
+            </div>
+          </div>
+        )}
 
         {matchesLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -530,6 +678,7 @@ export default function MatchesPage() {
                 onCheckFit={handleCheckFit}
                 isSaving={savingJobId === match.job.id}
                 isCheckingFit={checkingFitJobId === match.job.id}
+                hasFitResult={!!fitCheckResults[match.job.id]}
               />
             ))}
           </div>

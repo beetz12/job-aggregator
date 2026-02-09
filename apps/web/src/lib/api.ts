@@ -402,6 +402,20 @@ export async function getMatchedJobs(
   return res.json()
 }
 
+export async function scoreNewJobs(profileId: string, limit?: number): Promise<{ scored: number; skipped: number; total_jobs: number }> {
+  const apiBase = await discoverApiBase()
+  const res = await fetch(`${apiBase}/api/v1/score-new`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ profile_id: profileId, limit }),
+  })
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ error: 'Failed to score jobs' }))
+    throw new Error(error.error || 'Failed to score new jobs')
+  }
+  return res.json()
+}
+
 // ============================================================================
 // Applications API
 // ============================================================================

@@ -10,6 +10,7 @@ import {
   generateDetailedReasoning
 } from '../services/job-matching/orchestrator'
 import { updateJobScore } from '../services/database'
+import { geminiFitCheck } from '../services/gemini-fit-check'
 
 /**
  * POST /jobs/:id/check-fit
@@ -217,6 +218,102 @@ async function analyzeJobFit(options: AnalyzeJobFitOptions) {
     ],
     analyzedAt: now,
     // Enhanced fields
+    criteriaMatch,
+    shouldApply,
+    detailedReasoning
+  }
+}
+
+/**
+ * Analyze job fit using Gemini API
+ * Maps GeminiFitResult to the existing response shape
+ */
+async function analyzeJobFitWithGemini(options: AnalyzeJobFitOptions) {
+  const { job, userProfile, now, jobCriteria } = options
+
+  const [geminiResult] = await geminiFitCheck(userProfile, [job])
+
+  // Map Gemini fitScore to recommendation
+  const composite = geminiResult.fitScore
+  let recommendation: 'STRONG_APPLY' | 'APPLY' | 'CONDITIONAL' | 'SKIP'
+  if (composite >= 80) {
+    recommendation = 'STRONG_APPLY'
+  } else if (composite >= 60) {
+    recommendation = 'APPLY'
+  } else if (composite >= 40) {
+    recommendation = 'CONDITIONAL'
+  } else {
+    recommendation = 'SKIP'
+  }
+
+  const fitScore = {
+    composite,
+    confidence: Math.min(95, 75 + geminiResult.matchReasons.length * 5),
+    recommendation,
+    reasoning: geminiResult.matchReasons.length > 0
+      ? geminiResult.matchReasons.join('. ') + '.'
+      : `Fit score: ${composite}/100.`
+  }
+
+  const matchAnalysis = {
+    overallMatch: composite,
+    strongMatches: geminiResult.matchReasons,
+    partialMatches: [] as string[],
+    gaps: geminiResult.skillGaps,
+    transferableSkills: [] as string[]
+  }
+
+  // Calculate criteria match if job_criteria provided
+  let criteriaMatch: CriteriaMatch | undefined
+  if (jobCriteria) {
+    criteriaMatch = calculateCriteriaMatch(job, jobCriteria)
+  }
+
+  const shouldApply = determineShouldApply(fitScore, criteriaMatch)
+
+  const detailedReasoning = generateDetailedReasoning(
+    fitScore,
+    matchAnalysis,
+    criteriaMatch,
+    shouldApply
+  )
+
+  // Build company insights from available data
+  const redFlags = detectRedFlags(job.description)
+
+  return {
+    jobId: job.id,
+    userId: userProfile.id,
+    companyInsights: {
+      overallScore: composite,
+      scores: {
+        compensation: 15,
+        culture: 18,
+        familyFriendliness: 14,
+        technicalFit: Math.round(composite * 0.15),
+        industry: 8,
+        longTermPotential: 8
+      },
+      greenFlags: [
+        ...(job.remote ? ['Remote-friendly'] : []),
+        ...geminiResult.matchReasons.slice(0, 2)
+      ],
+      redFlags,
+      recentNews: [],
+      recommendation: composite >= 70 ? 'YES' as const : 'MAYBE' as const
+    },
+    matchAnalysis,
+    fitScore,
+    talkingPoints: geminiResult.matchReasons.length > 0
+      ? geminiResult.matchReasons.map(r => `Highlight: ${r}`)
+      : [`Research ${job.company} recent developments before interview`],
+    gapsToAddress: geminiResult.skillGaps.slice(0, 3),
+    interviewQuestions: [
+      `How does your experience relate to ${job.title} at ${job.company}?`,
+      `Why are you interested in ${job.company}?`,
+      'What are your career goals?'
+    ],
+    analyzedAt: now,
     criteriaMatch,
     shouldApply,
     detailedReasoning
@@ -443,17 +540,35 @@ export const handler: Handlers['CheckFit'] = async (req, { state, logger }) => {
   try {
     const userProfile = profileToUserProfile(profile)
     const now = new Date().toISOString()
-
-    const fitAnalysis = await analyzeJobFit({
+    const fitOptions: AnalyzeJobFitOptions = {
       job,
       userProfile,
       now,
       jobCriteria: job_criteria
-    })
+    }
 
-    // Persist score_source = 'gemini' to DB
+    let fitAnalysis
+    let scoreSource: 'gemini' | 'keyword' = 'keyword'
+
+    // Try Gemini first if API key is available
+    if (process.env.GEMINI_API_KEY) {
+      try {
+        fitAnalysis = await analyzeJobFitWithGemini(fitOptions)
+        scoreSource = 'gemini'
+        logger.info('Gemini fit analysis succeeded', { jobId })
+      } catch (geminiError) {
+        const geminiMsg = geminiError instanceof Error ? geminiError.message : 'Unknown'
+        logger.warn('Gemini fit analysis failed, falling back to local heuristic', { jobId, error: geminiMsg })
+        fitAnalysis = await analyzeJobFit(fitOptions)
+      }
+    } else {
+      logger.info('GEMINI_API_KEY not set, using local heuristic', { jobId })
+      fitAnalysis = await analyzeJobFit(fitOptions)
+    }
+
+    // Persist score to DB
     try {
-      await updateJobScore(jobId, fitAnalysis.fitScore.composite, 'gemini')
+      await updateJobScore(jobId, fitAnalysis.fitScore.composite, scoreSource)
     } catch (dbError) {
       logger.warn('Failed to persist score_source to DB', { jobId, error: dbError instanceof Error ? dbError.message : 'Unknown' })
     }
@@ -465,7 +580,7 @@ export const handler: Handlers['CheckFit'] = async (req, { state, logger }) => {
       recommendation: fitAnalysis.fitScore.recommendation,
       shouldApply: fitAnalysis.shouldApply,
       hasCriteriaMatch: !!fitAnalysis.criteriaMatch,
-      score_source: 'gemini'
+      score_source: scoreSource
     })
 
     return {
