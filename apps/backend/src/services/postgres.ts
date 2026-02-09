@@ -1,12 +1,33 @@
 import { Pool, PoolClient } from 'pg'
 import dns from 'dns'
 
-// Force IPv4 for all DNS lookups (Railway doesn't support IPv6)
-dns.setDefaultResultOrder('ipv4first')
+// Only force IPv4 on Railway (which doesn't support IPv6).
+// Supabase direct connections are IPv6-only, so ipv4first breaks them.
+if (process.env.RAILWAY_ENVIRONMENT) {
+  dns.setDefaultResultOrder('ipv4first')
+}
 
 const databaseUrl = process.env.DATABASE_URL
 
 let pool: Pool | null = null
+
+/**
+ * Parse a PostgreSQL connection string into explicit config.
+ * The pg library's URL parser + Node.js DNS can fail on IPv6-only hosts
+ * (like Supabase direct connections). Explicit config avoids this.
+ */
+function parseConnectionString(url: string): {
+  host: string; port: number; database: string; user: string; password: string
+} {
+  const parsed = new URL(url)
+  return {
+    host: parsed.hostname,
+    port: parseInt(parsed.port) || 5432,
+    database: parsed.pathname.slice(1) || 'postgres',
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+  }
+}
 
 /**
  * Get PostgreSQL pool instance (singleton)
@@ -21,8 +42,11 @@ export function getPool(): Pool | null {
     // Detect if SSL should be disabled (for local PostgreSQL)
     const sslDisabled = databaseUrl?.includes('sslmode=disable')
 
+    // Parse URL into explicit config to avoid IPv6 DNS resolution issues
+    const dbConfig = parseConnectionString(databaseUrl)
+
     pool = new Pool({
-      connectionString: databaseUrl,
+      ...dbConfig,
       ssl: sslDisabled ? false : {
         rejectUnauthorized: false // Required for cloud PostgreSQL (Neon, Supabase)
       },
